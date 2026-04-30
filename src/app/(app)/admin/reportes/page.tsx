@@ -102,7 +102,7 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
       .lte("factura.created_at", `${hasta}T23:59:59`);
 
     const map = new Map<string, { unidades: number; ingresos: number }>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     for (const fi of (data ?? []) as any[]) {
       const nombre = Array.isArray(fi.producto)
         ? (fi.producto[0]?.nombre ?? "-")
@@ -154,7 +154,7 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
       .lte("created_at", `${hasta}T23:59:59`);
 
     const map = new Map<string, { facturas: number; total: number }>();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     for (const f of (data ?? []) as any[]) {
       const nombre = Array.isArray(f.vendedor)
         ? (f.vendedor[0]?.nombre ?? "-")

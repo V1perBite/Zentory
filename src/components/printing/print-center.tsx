@@ -76,7 +76,7 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
 
     setAwaitingConfirmation(true);
     processingRef.current = false;
-  }, [getFacturaById, markPrinted, printNow]);
+  }, [getFacturaById, printNow]);
 
   useEffect(() => {
     const client = supabase.current;

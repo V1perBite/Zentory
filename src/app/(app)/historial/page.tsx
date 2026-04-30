@@ -45,11 +45,11 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
   ]);
 
   const facturas = (facturasRaw ?? []).map((f) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     const v = f.vendedor as any;
     const vendedorNombre = Array.isArray(v) ? (v[0]?.nombre ?? "-") : (v?.nombre ?? "-");
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     const items = ((f.factura_items ?? []) as any[]).map((fi) => ({
       nombre: Array.isArray(fi.producto)
         ? (fi.producto[0]?.nombre ?? "-")
