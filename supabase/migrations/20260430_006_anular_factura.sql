@@ -1,7 +1,5 @@
--- Allow 'anulada' as a valid invoice state
-ALTER TABLE facturas DROP CONSTRAINT IF EXISTS facturas_estado_check;
-ALTER TABLE facturas ADD CONSTRAINT facturas_estado_check
-  CHECK (estado IN ('pendiente_impresion', 'impresa', 'anulada'));
+-- Allow 'anulada' as a valid invoice state (enum extension)
+ALTER TYPE public.factura_estado ADD VALUE IF NOT EXISTS 'anulada';
 
 -- RPC: anular_factura
 -- Marks invoice as 'anulada', restores stock for each item, records kardex entries
