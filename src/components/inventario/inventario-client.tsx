@@ -47,6 +47,8 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
   const [editLoading, setEditLoading] = useState(false);
 
   const [search, setSearch] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<ProductoRow | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -67,6 +69,21 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
   const handleEditCosto = (v: number) => { setEditCosto(v); if (v > 0) setEditPrecio(Math.round(v * (1 + editUtilidad / 100))); };
   const handleEditPrecio = (v: number) => { setEditPrecio(v); if (editCosto > 0) setEditUtilidad(Math.round(((v - editCosto) / editCosto) * 100 * 10) / 10); };
   const handleEditUtilidad = (v: number) => { setEditUtilidad(v); if (editCosto > 0) setEditPrecio(Math.round(editCosto * (1 + v / 100))); };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleteLoading(true);
+    setError(null);
+    const { error: err } = await supabase
+      .from("productos")
+      .delete()
+      .eq("id", deleteConfirm.id);
+    setDeleteLoading(false);
+    if (err) { setError(err.message); return; }
+    setSuccess(`"${deleteConfirm.nombre}" eliminado.`);
+    setDeleteConfirm(null);
+    router.refresh();
+  };
 
   const onSaveEdit = async (e: FormEvent) => {
     e.preventDefault();
@@ -140,6 +157,7 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
               <th className="px-3 py-2">Producto</th>
               <th className="px-3 py-2">SKU</th>
               <th className="px-3 py-2">Precio</th>
+              {isAdmin ? <th className="px-3 py-2">Costo</th> : null}
               {isAdmin ? <th className="px-3 py-2">Stock</th> : null}
               {isAdmin ? <th className="px-3 py-2">Utilidad</th> : <th className="px-3 py-2">Estado</th>}
               {isAdmin ? <th className="px-3 py-2">Acciones</th> : null}
@@ -147,7 +165,7 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-            <tr><td colSpan={isAdmin ? 6 : 4} className="px-3 py-6 text-center text-sm text-slate-400">Sin resultados para &quot;{search}&quot;</td></tr>
+            <tr><td colSpan={isAdmin ? 7 : 4} className="px-3 py-6 text-center text-sm text-slate-400">Sin resultados para &quot;{search}&quot;</td></tr>
           ) : null}
           {filtered.map((p) => {
               const low = p.stock_actual <= p.minimo_stock;
@@ -160,6 +178,9 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                   <td className="px-3 py-2 font-medium">{p.nombre}</td>
                   <td className="px-3 py-2 text-slate-500">{p.sku_code}</td>
                   <td className="px-3 py-2">{formatCOP(Number(p.precio_venta))}</td>
+                  {isAdmin ? (
+                    <td className="px-3 py-2 text-slate-500">{formatCOP(Number(p.precio_costo))}</td>
+                  ) : null}
                   {isAdmin ? (
                     <td className="px-3 py-2">
                       <span className={low ? "font-semibold text-amber-700" : ""}>{p.stock_actual}</span>
@@ -191,6 +212,13 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                           className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 hover:bg-emerald-100"
                         >
                           📦 Kardex
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirm(p)}
+                          className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700 hover:bg-rose-100"
+                        >
+                          🗑 Eliminar
                         </button>
                       </div>
                     </td>
@@ -361,6 +389,56 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
           nombreProducto={kardexProducto.nombre}
           onClose={() => setKardexProducto(null)}
         />
+      ) : null}
+
+      {deleteConfirm ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onClick={() => !deleteLoading && setDeleteConfirm(null)}
+        >
+          <div
+            className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <h3 className="font-semibold text-slate-900">Eliminar producto</h3>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  ¿Eliminar <span className="font-medium">&quot;{deleteConfirm.nombre}&quot;</span>?
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded border border-slate-300 px-2 py-1 text-xs disabled:opacity-40"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+              ⚠️ Esta acción es permanente. El historial de movimientos del producto se conservará.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={() => setDeleteConfirm(null)}
+                className="rounded border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteLoading}
+                onClick={handleDelete}
+                className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60 hover:bg-rose-700"
+              >
+                {deleteLoading ? "Eliminando..." : "Sí, eliminar"}
+              </button>
+            </div>
+          </div>
+        </div>
       ) : null}
     </>
   );
