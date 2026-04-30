@@ -46,6 +46,7 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
   const [editMinimo, setEditMinimo] = useState(0);
   const [editLoading, setEditLoading] = useState(false);
 
+  const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -110,9 +111,27 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
     router.refresh();
   };
 
+  const filtered = search.trim()
+    ? productos.filter(
+        (p) =>
+          p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+          p.sku_code.toLowerCase().includes(search.toLowerCase()),
+      )
+    : productos;
+
   return (
     <>
       {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
+
+      <div className="mb-3">
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar por nombre o SKU..."
+          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none sm:max-w-xs"
+        />
+      </div>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="min-w-full text-sm">
@@ -121,13 +140,16 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
               <th className="px-3 py-2">Producto</th>
               <th className="px-3 py-2">SKU</th>
               <th className="px-3 py-2">Precio</th>
-              <th className="px-3 py-2">Stock</th>
+              {isAdmin ? <th className="px-3 py-2">Stock</th> : null}
               {isAdmin ? <th className="px-3 py-2">Utilidad</th> : <th className="px-3 py-2">Estado</th>}
               {isAdmin ? <th className="px-3 py-2">Acciones</th> : null}
             </tr>
           </thead>
           <tbody>
-            {productos.map((p) => {
+            {filtered.length === 0 ? (
+            <tr><td colSpan={isAdmin ? 6 : 4} className="px-3 py-6 text-center text-sm text-slate-400">Sin resultados para &quot;{search}&quot;</td></tr>
+          ) : null}
+          {filtered.map((p) => {
               const low = p.stock_actual <= p.minimo_stock;
               const utilidad =
                 Number(p.precio_costo) > 0
@@ -138,10 +160,12 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                   <td className="px-3 py-2 font-medium">{p.nombre}</td>
                   <td className="px-3 py-2 text-slate-500">{p.sku_code}</td>
                   <td className="px-3 py-2">{formatCOP(Number(p.precio_venta))}</td>
-                  <td className="px-3 py-2">
-                    <span className={low ? "font-semibold text-amber-700" : ""}>{p.stock_actual}</span>
-                    {low ? <span className="ml-1 text-xs">⚠️</span> : null}
-                  </td>
+                  {isAdmin ? (
+                    <td className="px-3 py-2">
+                      <span className={low ? "font-semibold text-amber-700" : ""}>{p.stock_actual}</span>
+                      {low ? <span className="ml-1 text-xs">⚠️</span> : null}
+                    </td>
+                  ) : null}
                   {isAdmin ? (
                     <td className="px-3 py-2 text-slate-600">{utilidad}</td>
                   ) : (

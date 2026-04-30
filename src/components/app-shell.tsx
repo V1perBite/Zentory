@@ -13,7 +13,6 @@ export function AppShell({ profile, children }: AppShellProps) {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/inventario", label: "Inventario" },
     { href: "/facturas", label: "Facturas" },
-    { href: "/historial", label: "Historial" },
   ];
 
   const links =
@@ -21,6 +20,7 @@ export function AppShell({ profile, children }: AppShellProps) {
       ? [
           ...baseLinks,
           { href: "/imprimir", label: "Imprimir" },
+          { href: "/admin/reportes", label: "Reportes" },
           { href: "/admin/usuarios", label: "Usuarios" },
           { href: "/admin/negocio", label: "Negocio" },
         ]

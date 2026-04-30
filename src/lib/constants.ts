@@ -10,6 +10,7 @@ export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 export const FACTURA_ESTADOS = {
   PENDIENTE_IMPRESION: "pendiente_impresion",
   IMPRESA: "impresa",
+  ANULADA: "anulada",
 } as const;
 
 export const TIPO_DESCUENTO = {
