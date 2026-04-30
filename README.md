@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Zentory
 
-## Getting Started
+PWA de inventario y facturación con `Next.js 14` + `Supabase` + `Tailwind`, con carrito persistido en `Zustand`, escáner de código de barras y flujo de impresión remota en ticket térmico 80mm.
 
-First, run the development server:
+## Stack
+
+- `Next.js 14` (App Router)
+- `Tailwind CSS`
+- `Supabase` (PostgreSQL, Auth, Realtime, RLS)
+- `Zustand` (carrito con `persist`)
+- `@zxing/browser` (escaneo por cámara)
+- `react-to-print` (ticket 80mm)
+- `next-pwa`
+
+## Configuración local
+
+1. Instalar dependencias:
+
+```bash
+npm install
+```
+
+2. Copiar variables de entorno:
+
+```bash
+copy .env.example .env.local
+```
+
+3. Completar en `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+```
+
+4. Ejecutar migración SQL en Supabase:
+
+- Archivo: `supabase/migrations/20260429_001_init.sql`
+
+5. Ejecutar proyecto:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estado implementado
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Login con Supabase Auth y verificación de `usuarios.activo`.
+- Rutas protegidas y shell por rol (`admin`, `vendedor`).
+- Inventario con listado, alertas de mínimo y herramientas admin (crear producto, activar/desactivar, ajuste manual por RPC).
+- Facturación con carrito persistido en `localStorage`, escaneo por cámara, descuentos por ítem/global y confirmación vía RPC atómica.
+- Centro de impresión (`/imprimir`) solo para admin, con cola `pendiente_impresion`, Realtime, ticket 72mm y marcado automático a `impresa`.
+- Historial por rol (admin: todo, vendedor: propio).
+- PWA configurada (`manifest`, `sw`).
