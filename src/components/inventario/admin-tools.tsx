@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SkuInput } from "@/components/ui/sku-input";
+import { ImportCsvModal } from "@/components/inventario/import-csv-modal";
 
 type ProductoRow = {
   id: string;
@@ -35,6 +36,7 @@ export function AdminTools({ productos }: AdminToolsProps) {
   const [success, setSuccess] = useState<string | null>(null);
   const [loadingAction, setLoadingAction] = useState<"create" | null>(null);
   const [openPanel, setOpenPanel] = useState<"create" | null>(null);
+  const [showImport, setShowImport] = useState(false);
 
   const onCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -109,7 +111,7 @@ export function AdminTools({ productos }: AdminToolsProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex">
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={() => togglePanel("create")}
@@ -117,7 +119,16 @@ export function AdminTools({ productos }: AdminToolsProps) {
         >
           ➕ Crear producto
         </button>
+        <button
+          type="button"
+          onClick={() => setShowImport(true)}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
+        >
+          📤 Importar CSV
+        </button>
       </div>
+
+      {showImport ? <ImportCsvModal onClose={() => setShowImport(false)} /> : null}
 
       {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
       {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
