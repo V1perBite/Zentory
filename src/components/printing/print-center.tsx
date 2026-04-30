@@ -4,16 +4,21 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { createClient } from "@/lib/supabase/client";
 import { FACTURA_ESTADOS } from "@/lib/constants";
-import type { FacturaConDetalle } from "@/lib/types";
+import type { FacturaConDetalle, Negocio } from "@/lib/types";
 import { Ticket } from "@/components/printing/ticket";
 
-export function PrintCenter() {
+type PrintCenterProps = {
+  negocio?: Negocio | null;
+};
+
+export function PrintCenter({ negocio }: PrintCenterProps) {
   const supabase = useRef(createClient());
   const ticketRef = useRef<HTMLDivElement>(null);
   const queueRef = useRef<string[]>([]);
   const processingRef = useRef(false);
   const [currentFactura, setCurrentFactura] = useState<FacturaConDetalle | null>(null);
   const [status, setStatus] = useState("Escuchando facturas pendientes...");
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   const printNow = useReactToPrint({
     content: () => ticketRef.current,
@@ -59,24 +64,18 @@ export function PrintCenter() {
     }
 
     setCurrentFactura(factura);
-    setStatus(`Imprimiendo factura #${factura.numero_factura}`);
+    setStatus(`Factura #${factura.numero_factura} lista para imprimir.`);
 
     await new Promise((resolve) => setTimeout(resolve, 150));
 
     try {
       await printNow?.();
-      await markPrinted(factura.id);
-      setStatus(`Factura #${factura.numero_factura} impresa.`);
     } catch {
-      queueRef.current.unshift(factura.id);
-      setStatus(`No se pudo imprimir la factura #${factura.numero_factura}. Queda pendiente.`);
+      setStatus(`Error al intentar imprimir la factura #${factura.numero_factura}.`);
     }
 
+    setAwaitingConfirmation(true);
     processingRef.current = false;
-
-    setTimeout(() => {
-      void processNext();
-    }, 150);
   }, [getFacturaById, markPrinted, printNow]);
 
   useEffect(() => {
@@ -133,9 +132,43 @@ export function PrintCenter() {
 
       <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700">{status}</div>
 
+      {awaitingConfirmation && currentFactura ? (
+        <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <p className="flex-1 text-sm text-amber-900">
+            ¿Se imprimió correctamente la factura <span className="font-semibold">#{currentFactura.numero_factura}</span>?
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              await markPrinted(currentFactura.id);
+              setAwaitingConfirmation(false);
+              setStatus(`Factura #${currentFactura.numero_factura} confirmada como impresa.`);
+              processingRef.current = false;
+              setTimeout(() => void processNext(), 150);
+            }}
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            ✅ Sí, imprimir correctamente
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              queueRef.current.unshift(currentFactura.id);
+              setAwaitingConfirmation(false);
+              setStatus(`Reintentando factura #${currentFactura.numero_factura}...`);
+              processingRef.current = false;
+              setTimeout(() => void processNext(), 300);
+            }}
+            className="rounded-md border border-amber-400 bg-white px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-100"
+          >
+            ⚠️ Reintentar
+          </button>
+        </div>
+      ) : null}
+
       <div ref={ticketRef}>
         {currentFactura ? (
-          <Ticket factura={currentFactura} printMode />
+          <Ticket factura={currentFactura} negocio={negocio} printMode />
         ) : (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">
             Sin facturas para imprimir.

@@ -2,6 +2,7 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ROLES } from "@/lib/constants";
 import Link from "next/link";
+import { formatCOP } from "@/lib/invoice-calculations";
 
 type HistorialPageProps = {
   searchParams?: {
@@ -10,6 +11,17 @@ type HistorialPageProps = {
     hasta?: string;
     numero?: string;
   };
+};
+
+type HistorialFacturaRow = {
+  id: string;
+  numero_factura: number;
+  subtotal: number;
+  descuento_total: number;
+  total: number;
+  estado: string;
+  created_at: string;
+  vendedor: { nombre: string } | { nombre: string }[] | null;
 };
 
 export default async function HistorialPage({ searchParams }: HistorialPageProps) {
@@ -22,7 +34,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
 
   let query = supabase
     .from("facturas")
-    .select("id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id")
+    .select("id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id,vendedor:usuarios(nombre)")
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -47,6 +59,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
   }
 
   const { data } = await query;
+  const facturas = (data ?? []) as HistorialFacturaRow[];
 
   return (
     <section className="space-y-4">
@@ -88,6 +101,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
             <tr>
               <th className="px-3 py-2">N°</th>
               <th className="px-3 py-2">Fecha</th>
+              {profile.rol === ROLES.ADMIN ? <th className="px-3 py-2">Vendedor</th> : null}
               <th className="px-3 py-2">Subtotal</th>
               <th className="px-3 py-2">Descuento</th>
               <th className="px-3 py-2">Total</th>
@@ -96,13 +110,18 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
             </tr>
           </thead>
           <tbody>
-            {(data ?? []).map((factura) => (
+            {facturas.map((factura) => (
               <tr key={factura.id} className="border-t border-slate-100">
                 <td className="px-3 py-2">{factura.numero_factura}</td>
                 <td className="px-3 py-2">{new Date(factura.created_at).toLocaleString()}</td>
-                <td className="px-3 py-2">${Number(factura.subtotal).toFixed(2)}</td>
-                <td className="px-3 py-2">${Number(factura.descuento_total).toFixed(2)}</td>
-                <td className="px-3 py-2">${Number(factura.total).toFixed(2)}</td>
+                {profile.rol === ROLES.ADMIN ? (
+                  <td className="px-3 py-2">
+                    {(Array.isArray(factura.vendedor) ? factura.vendedor[0]?.nombre : factura.vendedor?.nombre) ?? "-"}
+                  </td>
+                ) : null}
+                <td className="px-3 py-2">{formatCOP(Number(factura.subtotal))}</td>
+                <td className="px-3 py-2">{formatCOP(Number(factura.descuento_total))}</td>
+                <td className="px-3 py-2">{formatCOP(Number(factura.total))}</td>
                 <td className="px-3 py-2">{factura.estado}</td>
                 <td className="px-3 py-2">
                   <Link href={`/historial/${factura.id}`} className="text-slate-900 underline">

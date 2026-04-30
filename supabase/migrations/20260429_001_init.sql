@@ -1,9 +1,9 @@
 create extension if not exists pgcrypto;
 
-create type public.user_role as enum ('admin', 'vendedor');
-create type public.movimiento_tipo as enum ('entrada', 'salida', 'ajuste');
-create type public.factura_estado as enum ('pendiente_impresion', 'impresa');
-create type public.tipo_descuento as enum ('porcentaje', 'valor');
+do $$ begin create type public.user_role as enum ('admin', 'vendedor'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.movimiento_tipo as enum ('entrada', 'salida', 'ajuste'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.factura_estado as enum ('pendiente_impresion', 'impresa'); exception when duplicate_object then null; end $$;
+do $$ begin create type public.tipo_descuento as enum ('porcentaje', 'valor'); exception when duplicate_object then null; end $$;
 
 create sequence if not exists public.facturas_numero_seq as bigint start with 1 increment by 1;
 
@@ -133,36 +133,47 @@ alter table public.clientes enable row level security;
 alter table public.facturas enable row level security;
 alter table public.items_factura enable row level security;
 
+drop policy if exists usuarios_select_self_or_admin on public.usuarios;
 create policy usuarios_select_self_or_admin on public.usuarios
 for select using (auth.uid() = id or public.is_admin());
 
+drop policy if exists usuarios_update_admin on public.usuarios;
 create policy usuarios_update_admin on public.usuarios
 for update using (public.is_admin()) with check (public.is_admin());
 
+drop policy if exists usuarios_insert_admin on public.usuarios;
 create policy usuarios_insert_admin on public.usuarios
 for insert with check (public.is_admin());
 
+drop policy if exists productos_select_authenticated on public.productos;
 create policy productos_select_authenticated on public.productos
 for select using (auth.uid() is not null and (activo = true or public.is_admin()));
 
+drop policy if exists productos_mutation_admin on public.productos;
 create policy productos_mutation_admin on public.productos
 for all using (public.is_admin()) with check (public.is_admin());
 
+drop policy if exists clientes_select_authenticated on public.clientes;
 create policy clientes_select_authenticated on public.clientes
 for select using (auth.uid() is not null);
 
+drop policy if exists clientes_insert_authenticated on public.clientes;
 create policy clientes_insert_authenticated on public.clientes
 for insert with check (auth.uid() is not null);
 
+drop policy if exists clientes_update_admin on public.clientes;
 create policy clientes_update_admin on public.clientes
 for update using (public.is_admin()) with check (public.is_admin());
 
+drop policy if exists facturas_select_role on public.facturas;
 create policy facturas_select_role on public.facturas
 for select using (public.is_admin() or vendedor_id = auth.uid());
 
+drop policy if exists facturas_insert_rpc_block on public.facturas;
 create policy facturas_insert_rpc_block on public.facturas
 for insert with check (false);
 
+drop policy if exists facturas_update_only_admin_print on public.facturas;
 create policy facturas_update_only_admin_print on public.facturas
 for update using (public.is_admin())
 with check (
@@ -170,6 +181,7 @@ with check (
   and estado in ('pendiente_impresion', 'impresa')
 );
 
+drop policy if exists items_factura_select_role on public.items_factura;
 create policy items_factura_select_role on public.items_factura
 for select using (
   exists (
@@ -180,12 +192,15 @@ for select using (
   )
 );
 
+drop policy if exists items_factura_insert_rpc_block on public.items_factura;
 create policy items_factura_insert_rpc_block on public.items_factura
 for insert with check (false);
 
+drop policy if exists movimientos_select_role on public.movimientos_stock;
 create policy movimientos_select_role on public.movimientos_stock
 for select using (public.is_admin() or usuario_id = auth.uid());
 
+drop policy if exists movimientos_insert_admin on public.movimientos_stock;
 create policy movimientos_insert_admin on public.movimientos_stock
 for insert with check (public.is_admin());
 
@@ -293,7 +308,7 @@ begin
   insert into public.clientes (nombre, identificacion, telefono, direccion)
   values (
     coalesce(payload -> 'cliente' ->> 'nombre', 'Consumidor final'),
-    coalesce(payload -> 'cliente' ->> 'identificacion', 'N/A'),
+    coalesce(payload -> 'cliente' ->> 'identificacion', '22222'),
     payload -> 'cliente' ->> 'telefono',
     payload -> 'cliente' ->> 'direccion'
   )

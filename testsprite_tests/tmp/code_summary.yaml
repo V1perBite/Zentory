@@ -1,0 +1,160 @@
+version: "2"
+type: frontend
+tech_stack:
+  - TypeScript
+  - Next.js 14 (App Router)
+  - React 18
+  - Tailwind CSS
+  - Supabase SSR + Supabase JS
+  - Zustand
+  - ZXing Browser
+  - react-to-print
+routes:
+  - path: /
+    file: src/app/page.tsx
+    auth_required: false
+    description: Redirect automático a dashboard
+  - path: /login
+    file: src/app/login/page.tsx
+    auth_required: false
+    description: Inicio de sesión con validación de perfil activo
+  - path: /dashboard
+    file: src/app/(app)/dashboard/page.tsx
+    auth_required: true
+    description: Vista principal con accesos a módulos y alerta de bajo stock
+  - path: /inventario
+    file: src/app/(app)/inventario/page.tsx
+    auth_required: true
+    description: Consulta de productos y movimientos de stock; herramientas admin para CRUD y ajustes
+  - path: /facturas
+    file: src/app/(app)/facturas/page.tsx
+    auth_required: true
+    description: Entrada al módulo de facturación
+  - path: /facturas/nueva
+    file: src/app/(app)/facturas/nueva/page.tsx
+    auth_required: true
+    description: Creación de factura con carrito, escáner y descuentos
+  - path: /historial
+    file: src/app/(app)/historial/page.tsx
+    auth_required: true
+    description: Lista de facturas con filtros por estado, fecha y número
+  - path: /historial/[id]
+    file: src/app/(app)/historial/[id]/page.tsx
+    auth_required: true
+    description: Detalle de factura en formato ticket (solo lectura)
+  - path: /imprimir
+    file: src/app/(app)/imprimir/page.tsx
+    auth_required: true
+    description: Centro de impresión en cola para facturas pendientes (solo admin)
+features:
+  - name: Autenticación y control de acceso
+    description: Login con Supabase Auth y validación de usuario activo con redirecciones por sesión y rol
+    files:
+      - src/components/auth/login-form.tsx
+      - src/lib/auth.ts
+      - src/app/login/page.tsx
+      - src/app/(app)/layout.tsx
+      - src/components/signout-button.tsx
+    entry_route: /login
+    user_interactions:
+      - Ingresar correo y contraseña
+      - Enviar formulario de login
+      - Recibir error si credenciales inválidas o usuario inactivo
+      - Navegar a dashboard cuando autenticación es exitosa
+      - Cerrar sesión con el botón Salir
+    api_calls:
+      - method: POST
+        endpoint: supabase.auth.signInWithPassword
+      - method: GET
+        endpoint: supabase.from("usuarios").select("activo")
+      - method: POST
+        endpoint: supabase.auth.signOut
+    auth_required: false
+  - name: Gestión de inventario
+    description: Consulta de stock y movimientos para todos los usuarios, con herramientas administrativas para crear, editar, activar/desactivar y ajustar stock
+    files:
+      - src/app/(app)/inventario/page.tsx
+      - src/components/inventario/admin-tools.tsx
+    entry_route: /inventario
+    user_interactions:
+      - Revisar tabla de productos y alertas de mínimo
+      - Abrir paneles de administración para crear o editar productos
+      - Activar o desactivar productos
+      - Registrar ajuste de stock manual con motivo
+    api_calls:
+      - method: GET
+        endpoint: supabase.from("productos").select(...)
+      - method: GET
+        endpoint: supabase.from("movimientos_stock").select(...)
+      - method: INSERT
+        endpoint: supabase.from("productos").insert(...)
+      - method: UPDATE
+        endpoint: supabase.from("productos").update(...)
+      - method: POST
+        endpoint: supabase.rpc("ajustar_stock_manual")
+    auth_required: true
+  - name: Facturación con carrito y escaneo
+    description: Flujo de creación de facturas con búsqueda por SKU, escáner de códigos, descuentos por ítem/globales y confirmación de factura
+    files:
+      - src/app/(app)/facturas/page.tsx
+      - src/app/(app)/facturas/nueva/page.tsx
+      - src/components/facturas/nueva-factura-client.tsx
+      - src/components/facturas/barcode-scanner.tsx
+      - src/store/use-invoice-cart.ts
+      - src/lib/invoice-calculations.ts
+    entry_route: /facturas/nueva
+    user_interactions:
+      - Ir a Nueva factura desde el módulo Facturas
+      - Escanear código de barras o ingresar SKU manualmente
+      - Agregar, modificar o eliminar productos del carrito
+      - Ajustar descuentos por ítem y descuento global
+      - Completar datos básicos del cliente
+      - Confirmar factura para enviarla a impresión
+    api_calls:
+      - method: GET
+        endpoint: supabase.from("productos").select(...).eq("sku_code", ...)
+      - method: POST
+        endpoint: supabase.rpc("confirmar_factura")
+    auth_required: true
+  - name: Historial y detalle de facturas
+    description: Consulta histórica de facturas con filtros y visualización de detalle en ticket con restricciones por rol
+    files:
+      - src/app/(app)/historial/page.tsx
+      - src/app/(app)/historial/[id]/page.tsx
+      - src/components/printing/ticket.tsx
+    entry_route: /historial
+    user_interactions:
+      - Filtrar facturas por número, estado y rango de fechas
+      - Abrir detalle de una factura específica
+      - Revisar ticket generado en modo lectura
+    api_calls:
+      - method: GET
+        endpoint: supabase.from("facturas").select(...)
+      - method: GET
+        endpoint: supabase.from("facturas").select(...).eq("id", ...)
+    auth_required: true
+  - name: Centro de impresión automática
+    description: Cola de impresión en tiempo real para facturas pendientes, con suscripción a cambios de base de datos
+    files:
+      - src/app/(app)/imprimir/page.tsx
+      - src/components/printing/print-center.tsx
+      - src/components/printing/ticket.tsx
+    entry_route: /imprimir
+    user_interactions:
+      - Abrir la pantalla de impresión como admin
+      - Dejar la pestaña activa para procesar facturas pendientes
+      - Ver estado de impresión y ticket actual
+    api_calls:
+      - method: GET
+        endpoint: supabase.from("facturas").select("id").eq("estado", "pendiente_impresion")
+      - method: SUBSCRIBE
+        endpoint: supabase.channel("facturas-pendientes").on("postgres_changes", ...)
+      - method: GET
+        endpoint: supabase.from("facturas").select(...).eq("id", ...)
+      - method: POST
+        endpoint: supabase.rpc("marcar_factura_impresa")
+    auth_required: true
+known_limitations:
+  - issue: El flujo de impresión depende de que una pestaña de navegador en /imprimir permanezca abierta por un usuario admin
+    location: src/components/printing/print-center.tsx
+    impact: Si no hay sesión admin con esa vista activa, las facturas quedan en estado pendiente_impresion sin procesarse automáticamente

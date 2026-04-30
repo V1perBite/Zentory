@@ -3,12 +3,14 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { SkuInput } from "@/components/ui/sku-input";
 
 type ProductoRow = {
   id: string;
   nombre: string;
   sku_code: string;
   precio_venta: number;
+  precio_costo: number;
   stock_actual: number;
   minimo_stock: number;
   activo: boolean;
@@ -25,34 +27,44 @@ export function AdminTools({ productos }: AdminToolsProps) {
   const [nombre, setNombre] = useState("");
   const [sku, setSku] = useState("");
   const [precio, setPrecio] = useState(0);
+  const [costo, setCosto] = useState(0);
+  const [utilidad, setUtilidad] = useState(0);
   const [stock, setStock] = useState(0);
   const [minimo, setMinimo] = useState(0);
-  const [ajusteProducto, setAjusteProducto] = useState("");
-  const [ajusteCantidad, setAjusteCantidad] = useState(0);
-  const [motivo, setMotivo] = useState("ajuste_manual");
-  const [editId, setEditId] = useState<string>("");
-  const [editNombre, setEditNombre] = useState("");
-  const [editSku, setEditSku] = useState("");
-  const [editPrecio, setEditPrecio] = useState(0);
-  const [editMinimo, setEditMinimo] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [loadingAction, setLoadingAction] = useState<"create" | null>(null);
+  const [openPanel, setOpenPanel] = useState<"create" | null>(null);
 
   const onCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
     setSuccess(null);
 
+    if (!nombre.trim() || !sku.trim()) {
+      setError("Nombre y SKU son obligatorios.");
+      return;
+    }
+
+    if (precio < 0 || stock < 0 || minimo < 0) {
+      setError("Precio, stock y mínimo no pueden ser negativos.");
+      return;
+    }
+
+    setLoadingAction("create");
+
     const { error: createError } = await supabase.from("productos").insert({
-      nombre,
-      sku_code: sku,
+      nombre: nombre.trim(),
+      sku_code: sku.trim(),
       precio_venta: precio,
+      precio_costo: costo,
       stock_actual: stock,
       minimo_stock: minimo,
       activo: true,
     });
 
     if (createError) {
+      setLoadingAction(null);
       setError(createError.message);
       return;
     }
@@ -60,246 +72,176 @@ export function AdminTools({ productos }: AdminToolsProps) {
     setNombre("");
     setSku("");
     setPrecio(0);
+    setCosto(0);
+    setUtilidad(0);
     setStock(0);
     setMinimo(0);
     setSuccess("Producto creado correctamente.");
+    setLoadingAction(null);
+    setOpenPanel(null);
     router.refresh();
   };
 
-  const onLoadForEdit = (productoId: string) => {
-    const product = productos.find((p) => p.id === productoId);
-    if (!product) return;
+  const isOpen = (panel: "create") => openPanel === panel;
 
-    setEditId(product.id);
-    setEditNombre(product.nombre);
-    setEditSku(product.sku_code);
-    setEditPrecio(Number(product.precio_venta));
-    setEditMinimo(Number(product.minimo_stock));
+  const togglePanel = (panel: "create") => {
+    setOpenPanel((current) => (current === panel ? null : panel));
     setError(null);
     setSuccess(null);
   };
 
-  const onUpdate = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!editId) {
-      setError("Selecciona un producto para editar.");
-      return;
-    }
-
-    setError(null);
-    setSuccess(null);
-
-    const { error: updateError } = await supabase
-      .from("productos")
-      .update({
-        nombre: editNombre,
-        sku_code: editSku,
-        precio_venta: editPrecio,
-        minimo_stock: editMinimo,
-      })
-      .eq("id", editId);
-
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-
-    setSuccess("Producto actualizado correctamente.");
-    router.refresh();
+  const panelTitle: Record<"create", string> = {
+    create: "Crear producto",
   };
 
-  const onToggleActivo = async (producto: ProductoRow) => {
-    setError(null);
-    setSuccess(null);
-
-    const { error: toggleError } = await supabase
-      .from("productos")
-      .update({ activo: !producto.activo })
-      .eq("id", producto.id);
-
-    if (toggleError) {
-      setError(toggleError.message);
-      return;
-    }
-
-    setSuccess(`Producto ${producto.activo ? "desactivado" : "activado"} correctamente.`);
-    router.refresh();
+  const handleCreateCostoChange = (v: number) => {
+    setCosto(v);
+    if (v > 0) setPrecio(Math.round(v * (1 + utilidad / 100)));
   };
-
-  const onAjustarStock = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setSuccess(null);
-
-    if (!motivo.trim()) {
-      setError("El motivo es obligatorio.");
-      return;
-    }
-
-    const { error: rpcError } = await supabase.rpc("ajustar_stock_manual", {
-      p_producto_id: ajusteProducto,
-      p_cantidad: ajusteCantidad,
-      p_motivo: motivo.trim(),
-    });
-
-    if (rpcError) {
-      setError(rpcError.message);
-      return;
-    }
-
-    setAjusteCantidad(0);
-    setSuccess("Ajuste de stock registrado.");
-    router.refresh();
+  const handleCreatePrecioChange = (v: number) => {
+    setPrecio(v);
+    if (costo > 0) setUtilidad(Math.round(((v - costo) / costo) * 100 * 10) / 10);
+  };
+  const handleCreateUtilidadChange = (v: number) => {
+    setUtilidad(v);
+    if (costo > 0) setPrecio(Math.round(costo * (1 + v / 100)));
   };
 
   return (
     <div className="space-y-4">
-      <form onSubmit={onCreate} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-5">
-        <input
-          value={nombre}
-          onChange={(event) => setNombre(event.target.value)}
-          placeholder="Nombre"
-          required
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          value={sku}
-          onChange={(event) => setSku(event.target.value)}
-          placeholder="SKU"
-          required
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          type="number"
-          min={0}
-          value={precio}
-          onChange={(event) => setPrecio(Number(event.target.value))}
-          placeholder="Precio"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          type="number"
-          min={0}
-          value={stock}
-          onChange={(event) => setStock(Number(event.target.value))}
-          placeholder="Stock"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min={0}
-            value={minimo}
-            onChange={(event) => setMinimo(Number(event.target.value))}
-            placeholder="Mínimo"
-            className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-          />
-          <button type="submit" className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white">
-            Crear
-          </button>
-        </div>
-      </form>
-
-      <form onSubmit={onUpdate} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-5">
-        <select
-          value={editId}
-          onChange={(event) => onLoadForEdit(event.target.value)}
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
+      <div className="flex">
+        <button
+          type="button"
+          onClick={() => togglePanel("create")}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-800 hover:bg-slate-50"
         >
-          <option value="">Selecciona producto a editar</option>
-          {productos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre} ({p.sku_code})
-            </option>
-          ))}
-        </select>
-        <input
-          value={editNombre}
-          onChange={(event) => setEditNombre(event.target.value)}
-          placeholder="Nombre"
-          required
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          value={editSku}
-          onChange={(event) => setEditSku(event.target.value)}
-          placeholder="SKU"
-          required
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          type="number"
-          min={0}
-          value={editPrecio}
-          onChange={(event) => setEditPrecio(Number(event.target.value))}
-          placeholder="Precio"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <div className="flex gap-2">
-          <input
-            type="number"
-            min={0}
-            value={editMinimo}
-            onChange={(event) => setEditMinimo(Number(event.target.value))}
-            placeholder="Mínimo"
-            className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
-          />
-          <button type="submit" className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white">
-            Guardar
-          </button>
-        </div>
-      </form>
-
-      <form onSubmit={onAjustarStock} className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-4">
-        <select
-          value={ajusteProducto}
-          onChange={(event) => setAjusteProducto(event.target.value)}
-          required
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        >
-          <option value="">Selecciona producto</option>
-          {productos.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nombre} ({p.sku_code})
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          value={ajusteCantidad}
-          onChange={(event) => setAjusteCantidad(Number(event.target.value))}
-          placeholder="Ajuste (+/-)"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <input
-          value={motivo}
-          onChange={(event) => setMotivo(event.target.value)}
-          placeholder="Motivo"
-          className="rounded border border-slate-300 px-2 py-1.5 text-sm"
-        />
-        <button type="submit" className="rounded bg-slate-900 px-3 py-1.5 text-sm text-white">
-          Ajustar stock
+          ➕ Crear producto
         </button>
-      </form>
-
-      <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <p className="mb-2 text-sm font-medium">Activar / desactivar producto</p>
-        <div className="flex flex-wrap gap-2">
-          {productos.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => onToggleActivo(p)}
-              className="rounded border border-slate-300 px-2 py-1 text-xs"
-            >
-              {p.nombre} → {p.activo ? "Desactivar" : "Activar"}
-            </button>
-          ))}
-        </div>
       </div>
 
-      {success ? <p className="text-sm text-emerald-700">{success}</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
+      {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
+
+      {openPanel ? (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onClick={() => setOpenPanel(null)}
+        >
+          <div
+            className="w-full max-w-2xl space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold text-slate-900">{panelTitle[openPanel]}</h3>
+              <button
+                type="button"
+                onClick={() => setOpenPanel(null)}
+                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
+              >
+                Cerrar ✕
+              </button>
+            </div>
+
+            {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
+            {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
+
+            {isOpen("create") ? (
+              <form onSubmit={onCreate} className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Nombre *</span>
+                    <input
+                      value={nombre}
+                      onChange={(event) => setNombre(event.target.value)}
+                      placeholder="Ej: Arroz 1kg"
+                      required
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>SKU *</span>
+                    <SkuInput value={sku} onChange={setSku} placeholder="Ej: ARZ-001" required />
+                  </label>
+                </div>
+                <p className="text-xs font-medium text-slate-500">Precios (campos sincronizados)</p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Costo</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={costo}
+                      onChange={(event) => handleCreateCostoChange(Number(event.target.value))}
+                      placeholder="0"
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Utilidad %</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.1}
+                      value={utilidad}
+                      onChange={(event) => handleCreateUtilidadChange(Number(event.target.value))}
+                      placeholder="0"
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Precio de venta *</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={precio}
+                      onChange={(event) => handleCreatePrecioChange(Number(event.target.value))}
+                      placeholder="0"
+                      required
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Stock inicial *</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={stock}
+                      onChange={(event) => setStock(Number(event.target.value))}
+                      placeholder="0"
+                      required
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                  <label className="space-y-1 text-xs text-slate-600">
+                    <span>Stock mínimo *</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={minimo}
+                      onChange={(event) => setMinimo(Number(event.target.value))}
+                      placeholder="0"
+                      required
+                      className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
+                    />
+                  </label>
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={loadingAction === "create"}
+                    className="rounded bg-slate-900 px-4 py-1.5 text-sm text-white disabled:opacity-60"
+                  >
+                    {loadingAction === "create" ? "Creando..." : "Crear producto"}
+                  </button>
+                </div>
+              </form>
+            ) : null}
+
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

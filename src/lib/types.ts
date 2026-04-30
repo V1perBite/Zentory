@@ -3,6 +3,7 @@ import type { UserRole } from "./constants";
 export type Usuario = {
   id: string;
   nombre: string;
+  email: string | null;
   rol: UserRole;
   activo: boolean;
   created_at: string;
@@ -13,6 +14,7 @@ export type Producto = {
   nombre: string;
   sku_code: string;
   precio_venta: number;
+  precio_costo: number;
   stock_actual: number;
   minimo_stock: number;
   activo: boolean;
@@ -23,8 +25,20 @@ export type Cliente = {
   id: string;
   nombre: string;
   identificacion: string;
+  nit: string | null;
+  email: string | null;
   telefono: string | null;
   direccion: string | null;
+};
+
+export type Negocio = {
+  id: string;
+  nombre: string;
+  direccion: string | null;
+  telefono: string | null;
+  nit: string | null;
+  mensaje_agradecimiento: string;
+  updated_at: string;
 };
 
 export type Factura = {

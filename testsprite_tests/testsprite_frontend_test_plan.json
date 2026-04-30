@@ -1,0 +1,1155 @@
+[
+  {
+    "id": "TC001",
+    "title": "Crear y confirmar una factura y verla pendiente de impresión en historial",
+    "description": "Verifica que un vendedor pueda armar un carrito con SKU, aplicar descuentos y confirmar una factura, quedando visible en historial con estado pendiente de impresión y ticket accesible.",
+    "category": "Facturación con carrito y escaneo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Invoice Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-INV-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the manual stock adjustment tool for the created product"
+      },
+      {
+        "type": "action",
+        "description": "Fill 10 into the stock adjustment quantity field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Seed stock for invoicing into the adjustment reason field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the stock adjustment"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the invoicing module"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to start creating a new invoice"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-INV-001 into the SKU search field"
+      },
+      {
+        "type": "action",
+        "description": "Add the found product to the cart"
+      },
+      {
+        "type": "action",
+        "description": "Set the cart item quantity to 2"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid item-level discount into the item discount field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid global discount into the global discount field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Customer into the customer name field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the invoice to send it to printing"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Filter the invoice list by status pending for printing"
+      },
+      {
+        "type": "action",
+        "description": "Open the most recent invoice detail from the list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the invoice ticket detail is displayed in read-only mode"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC002",
+    "title": "Iniciar sesión y llegar al dashboard",
+    "description": "Verifica que un usuario con credenciales válidas pueda iniciar sesión y aterrizar en la vista principal con accesos a módulos.",
+    "category": "Autenticación y control de acceso",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user lands on the dashboard"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC003",
+    "title": "Procesar una factura pendiente e identificarla como impresa desde el centro de impresión (admin)",
+    "description": "Verifica que un admin pueda seleccionar una factura pendiente, ver su ticket y marcarla como impresa desde la interfaz.",
+    "category": "Centro de impresión automática",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the print center module"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the pending invoices queue to display at least one item"
+      },
+      {
+        "type": "action",
+        "description": "Click a pending invoice in the queue to load its ticket detail"
+      },
+      {
+        "type": "action",
+        "description": "Trigger printing from the print center workflow"
+      },
+      {
+        "type": "action",
+        "description": "Complete the in-app action to mark the invoice as printed"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the invoice is shown as printed in the print center interface (removed from pending queue or shown with printed status)"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC004",
+    "title": "Cerrar sesión desde el dashboard",
+    "description": "Verifica que un usuario con sesión activa pueda cerrar sesión y regresar a la pantalla de login.",
+    "category": "Autenticación y control de acceso",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Trigger the sign out action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the user is redirected to the login view"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC005",
+    "title": "Ver cola de pendientes e indicador de conexión en centro de impresión (admin)",
+    "description": "Verifica que un admin pueda abrir el centro de impresión y ver el indicador de conexión junto con la cola de facturas pendientes.",
+    "category": "Centro de impresión automática",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the print center module"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a connection/listening indicator is displayed and the pending invoices queue is visible (or an appropriate empty state is shown)"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC006",
+    "title": "Modificar y eliminar ítems del carrito antes de confirmar",
+    "description": "Verifica que al agregar múltiples productos a una factura se pueda modificar cantidades y eliminar ítems, quedando el carrito actualizado.",
+    "category": "Facturación con carrito y escaneo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Cart Product A into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-CART-A into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Cart Product B into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-CART-B into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the manual stock adjustment tool for product A"
+      },
+      {
+        "type": "action",
+        "description": "Fill 10 into the stock adjustment quantity field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Seed stock A into the adjustment reason field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the stock adjustment"
+      },
+      {
+        "type": "action",
+        "description": "Open the manual stock adjustment tool for product B"
+      },
+      {
+        "type": "action",
+        "description": "Fill 10 into the stock adjustment quantity field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Seed stock B into the adjustment reason field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the stock adjustment"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the invoicing module"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to start creating a new invoice"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-CART-A into the SKU search field"
+      },
+      {
+        "type": "action",
+        "description": "Add the found product to the cart"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-CART-B into the SKU search field"
+      },
+      {
+        "type": "action",
+        "description": "Add the found product to the cart"
+      },
+      {
+        "type": "action",
+        "description": "Set the cart item quantity for product A to 3"
+      },
+      {
+        "type": "action",
+        "description": "Remove product B from the cart"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the cart shows only one item with the updated quantity"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC007",
+    "title": "Filtrar facturas por número, estado y rango de fechas",
+    "description": "Verifica que el usuario pueda aplicar filtros por número, estado y fechas y que la lista de facturas se actualice mostrando resultados consistentes con los criterios.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Fill a known invoice number into the invoice number filter field"
+      },
+      {
+        "type": "action",
+        "description": "Select a status in the status filter"
+      },
+      {
+        "type": "action",
+        "description": "Select a valid date range in the date range filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the invoice list reflects the applied filters (only matching invoices are displayed or an appropriate empty state is shown)"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC008",
+    "title": "Abrir una factura desde el historial y ver ticket de solo lectura",
+    "description": "Verifica que el usuario pueda abrir una factura listada y visualizar el ticket con la información principal en modo solo lectura.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Click an invoice from the list to open its detail"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a read-only ticket view is displayed with invoice header info, line items, and totals"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC009",
+    "title": "Reflejar factura impresa en historial filtrando por estado impresa (admin)",
+    "description": "Verifica que tras marcar una factura como impresa, el admin pueda encontrarla en el historial aplicando filtro por estado impresa.",
+    "category": "Centro de impresión automática",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the print center module"
+      },
+      {
+        "type": "action",
+        "description": "Wait for the pending invoices queue to display at least one item"
+      },
+      {
+        "type": "action",
+        "description": "Click a pending invoice in the queue to load its ticket detail"
+      },
+      {
+        "type": "action",
+        "description": "Complete the in-app action to mark the invoice as printed"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Select the printed status in the status filter"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify at least one invoice is displayed with printed status, including the one just marked as printed"
+      }
+    ],
+    "priority": "High"
+  },
+  {
+    "id": "TC010",
+    "title": "Restricción por rol en historial: vendedor no ve facturas de otro vendedor al filtrar",
+    "description": "Verifica que un vendedor no pueda obtener facturas de otros vendedores al aplicar filtros y que solo se muestren facturas permitidas por su rol.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Apply filters intended to locate invoices from a different seller (when such a filter control exists)"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify only invoices permitted for the current seller role are displayed and no cross-seller invoices are shown"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC011",
+    "title": "Crear un producto desde inventario",
+    "description": "Verifica que se pueda crear un producto desde el módulo de inventario y que aparezca en la lista de productos.",
+    "category": "Gestión de inventario",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Test Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the newly created product appears in the products list"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC012",
+    "title": "Editar un producto existente desde inventario",
+    "description": "Verifica que se pueda editar un producto existente y que los cambios se reflejen en la tabla de inventario.",
+    "category": "Gestión de inventario",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Edit Target into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-EDIT-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the edit panel for the created product"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Edit Target Updated into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Save the product changes"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the product list reflects the updated product name"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC013",
+    "title": "Registrar ajuste de stock manual con motivo",
+    "description": "Verifica que un ajuste manual de stock con motivo se registre y aparezca como movimiento en el historial de movimientos de stock.",
+    "category": "Gestión de inventario",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Stock Adjust Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-STOCK-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the manual stock adjustment tool for the created product"
+      },
+      {
+        "type": "action",
+        "description": "Fill 5 into the stock adjustment quantity field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Stock correction for UI test into the adjustment reason field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the stock adjustment"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a new stock movement entry is displayed for the adjustment"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC014",
+    "title": "Persistencia de filtros al navegar entre lista y detalle",
+    "description": "Verifica que al volver desde el detalle al listado, los filtros aplicados se mantengan y la lista siga en el mismo estado filtrado.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Select a status in the status filter"
+      },
+      {
+        "type": "action",
+        "description": "Click an invoice from the filtered list to open its detail"
+      },
+      {
+        "type": "action",
+        "description": "Click the control to return to the invoice list"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the invoice list is still filtered by the previously selected status"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC015",
+    "title": "Activar o desactivar un producto",
+    "description": "Verifica que se pueda cambiar el estado activo/inactivo de un producto desde inventario y que el estado se actualice en la tabla.",
+    "category": "Gestión de inventario",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Toggle Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-TOGGLE-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Trigger the action to deactivate the created product"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the deactivate action"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the product is shown as inactive in the products table"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC016",
+    "title": "Limpiar filtros del historial y recuperar el listado general",
+    "description": "Verifica que el usuario pueda limpiar los filtros aplicados y volver a ver el listado sin criterios activos.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Select a status in the status filter"
+      },
+      {
+        "type": "action",
+        "description": "Fill a known invoice number into the invoice number filter field"
+      },
+      {
+        "type": "action",
+        "description": "Click the control to clear or reset all filters"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify the invoice list is shown without the previously applied filter constraints"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC017",
+    "title": "Bloquear confirmación de factura por stock insuficiente",
+    "description": "Verifica que al intentar confirmar una factura con cantidad superior al stock disponible se muestre una validación de stock insuficiente y no se confirme.",
+    "category": "Facturación con carrito y escaneo",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Low Stock Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-LOW-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill a valid non-negative selling price into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Save the new product"
+      },
+      {
+        "type": "action",
+        "description": "Open the manual stock adjustment tool for the created product"
+      },
+      {
+        "type": "action",
+        "description": "Fill 1 into the stock adjustment quantity field"
+      },
+      {
+        "type": "action",
+        "description": "Fill Seed minimal stock into the adjustment reason field"
+      },
+      {
+        "type": "action",
+        "description": "Confirm the stock adjustment"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the invoicing module"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to start creating a new invoice"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-LOW-001 into the SKU search field"
+      },
+      {
+        "type": "action",
+        "description": "Add the found product to the cart"
+      },
+      {
+        "type": "action",
+        "description": "Set the cart item quantity to 2"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to confirm the invoice"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a stock validation error is visible and confirmation is blocked"
+      }
+    ],
+    "priority": "Medium"
+  },
+  {
+    "id": "TC018",
+    "title": "Estado vacío en historial cuando no hay coincidencias",
+    "description": "Verifica que al aplicar filtros que no devuelven resultados se muestre un estado vacío claro sin romper la página.",
+    "category": "Historial y detalle de facturas",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the navigation option to open the invoice history module"
+      },
+      {
+        "type": "action",
+        "description": "Fill a non-existing invoice number into the invoice number filter field"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an empty state is displayed indicating there are no matching invoices"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC019",
+    "title": "Validar precio negativo al crear producto",
+    "description": "Verifica que el sistema bloquee la creación de un producto cuando el precio de venta es negativo mostrando un error de validación.",
+    "category": "Gestión de inventario",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Click the link to open the inventory module"
+      },
+      {
+        "type": "action",
+        "description": "Open the create product panel from the administrative tools"
+      },
+      {
+        "type": "action",
+        "description": "Fill Zentory Negative Price Product into the product name field"
+      },
+      {
+        "type": "action",
+        "description": "Fill ZENT-SKU-NEG-001 into the SKU field"
+      },
+      {
+        "type": "action",
+        "description": "Fill -1 into the price field"
+      },
+      {
+        "type": "action",
+        "description": "Attempt to save the new product"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify a price validation error is visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC020",
+    "title": "Restringir acceso al centro de impresión para usuario sin rol admin",
+    "description": "Verifica que un usuario sin rol admin no pueda acceder al centro de impresión y no pueda ver la cola de impresión.",
+    "category": "Centro de impresión automática",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_USER}} into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill {{LOGIN_PASSWORD}} into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "action",
+        "description": "Navigate to /imprimir"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify access is restricted and the print queue is not visible"
+      }
+    ],
+    "priority": "Low"
+  },
+  {
+    "id": "TC021",
+    "title": "Rechazar login con credenciales inválidas",
+    "description": "Verifica que al ingresar credenciales inválidas el usuario no inicia sesión y se muestra un error de autenticación.",
+    "category": "Autenticación y control de acceso",
+    "steps": [
+      {
+        "type": "action",
+        "description": "Navigate to /login"
+      },
+      {
+        "type": "action",
+        "description": "Fill invalid_user@example.com into the email field"
+      },
+      {
+        "type": "action",
+        "description": "Fill wrong-password into the password field"
+      },
+      {
+        "type": "action",
+        "description": "Submit the login form"
+      },
+      {
+        "type": "assertion",
+        "description": "Verify an authentication error is visible"
+      }
+    ],
+    "priority": "Low"
+  }
+]

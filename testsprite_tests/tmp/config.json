@@ -1,0 +1,19 @@
+{
+  "status": "commited",
+  "type": "frontend",
+  "scope": "codebase",
+  "localEndpoint": "http://localhost:3000",
+  "loginUser": "er20182511@gmail.com",
+  "loginPassword": "David123*",
+  "executionArgs": {
+    "projectName": "zentory",
+    "projectPath": "c:\\Proyectos\\Zentory",
+    "testIds": [],
+    "additionalInstruction": "Prioriza flujos críticos: login, dashboard, inventario, facturas nuevas, historial y centro de impresión por rol.",
+    "serverMode": "development",
+    "envs": {
+      "API_KEY": "sk-user-sYPXaSy3VGJAmcVLoF0BPq-ABZQyVaMLju3XSjGOCPYSpsEIhlMwcJqlcLEYN1rek_3DFsuh4bcE391LRwKQL2lcVHelZhgVNwM5pK8PJm1mDhtMdpBk_zexHBk1wd3gBnY"
+    }
+  },
+  "serverPort": 57096
+}

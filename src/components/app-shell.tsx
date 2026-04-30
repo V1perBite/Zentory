@@ -18,7 +18,12 @@ export function AppShell({ profile, children }: AppShellProps) {
 
   const links =
     profile.rol === ROLES.ADMIN
-      ? [...baseLinks, { href: "/imprimir", label: "Imprimir" }]
+      ? [
+          ...baseLinks,
+          { href: "/imprimir", label: "Imprimir" },
+          { href: "/admin/usuarios", label: "Usuarios" },
+          { href: "/admin/negocio", label: "Negocio" },
+        ]
       : baseLinks;
 
   return (

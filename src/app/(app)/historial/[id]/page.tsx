@@ -3,7 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ROLES } from "@/lib/constants";
 import { Ticket } from "@/components/printing/ticket";
-import type { FacturaConDetalle } from "@/lib/types";
+import type { FacturaConDetalle, Negocio } from "@/lib/types";
 
 type HistorialDetailPageProps = {
   params: {
@@ -29,6 +29,9 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
     notFound();
   }
 
+  const { data: negocioData } = await supabase.from("negocio").select("*").limit(1).single();
+  const negocio = negocioData as Negocio | null;
+
   if (profile.rol !== ROLES.ADMIN && factura.vendedor_id !== profile.id) {
     notFound();
   }
@@ -41,7 +44,7 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
-        <Ticket factura={factura} />
+        <Ticket factura={factura} negocio={negocio} />
       </div>
     </section>
   );
