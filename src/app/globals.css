@@ -7,7 +7,8 @@
 }
 
 body {
-  @apply bg-slate-100 text-slate-900;
+  @apply bg-slate-50 text-slate-900;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @layer utilities {
@@ -17,6 +18,18 @@ body {
 
   .ticket-width {
     width: var(--ticket-width);
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
   }
 }
 

@@ -7,6 +7,7 @@ import { formatCOP } from "@/lib/invoice-calculations";
 import { KardexModal } from "@/components/inventario/kardex-modal";
 import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
+import { Search, Edit2, Archive, Trash2, Package, Tag, TrendingUp, AlertTriangle } from "lucide-react";
 
 type ProductoRow = {
   id: string;
@@ -141,32 +142,109 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
     <>
       {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
 
-      <div className="mb-3">
+      <div className="mb-4">
         <SkuInput
           value={search}
           onChange={setSearch}
           onDetected={setSearch}
           placeholder="Buscar por nombre o SKU..."
-          className="sm:max-w-xs"
+          className="w-full sm:max-w-md"
         />
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+      {/* Vista Móvil (Tarjetas) */}
+      <div className="grid gap-3 md:hidden">
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-12 px-4 text-center">
+            <Search className="h-10 w-10 text-slate-400 mb-3" />
+            <p className="text-sm font-medium text-slate-600">Sin resultados para &quot;{search}&quot;</p>
+            <p className="text-xs text-slate-500 mt-1">Intenta con otro término o SKU</p>
+          </div>
+        ) : null}
+        {filtered.map((p) => {
+          const low = p.stock_actual <= p.minimo_stock;
+          return (
+            <div key={p.id} className="relative overflow-hidden rounded-2xl bg-white p-4 shadow-sm border border-slate-200">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h4 className="truncate font-bold text-slate-900">{p.nombre}</h4>
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                    <Tag className="h-3.5 w-3.5" />
+                    <span className="truncate">{p.sku_code}</span>
+                  </div>
+                </div>
+                <div className={`flex shrink-0 items-center justify-center rounded-xl px-2.5 py-1 ${low ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+                  <Package className="mr-1.5 h-4 w-4" />
+                  <span className="font-bold text-lg leading-none">{p.stock_actual}</span>
+                  {low && <AlertTriangle className="ml-1.5 h-4 w-4" />}
+                </div>
+              </div>
+              
+              <div className="mt-4 grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3">
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Precio</p>
+                  <p className="mt-0.5 text-sm font-bold text-slate-900">{formatCOP(Number(p.precio_venta))}</p>
+                </div>
+                {isAdmin && (
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Costo</p>
+                    <p className="mt-0.5 text-sm font-medium text-slate-700">{formatCOP(Number(p.precio_costo))}</p>
+                  </div>
+                )}
+              </div>
+
+              {isAdmin && (
+                <div className="mt-4 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openMovimiento(p)}
+                    className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-50 text-sm font-semibold text-indigo-700 active:bg-indigo-100"
+                  >
+                    <Archive className="h-4 w-4" />
+                    Kardex
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-slate-100 text-sm font-semibold text-slate-700 active:bg-slate-200"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirm(p)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 active:bg-rose-100"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Vista Desktop (Tabla) */}
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
         <table className="min-w-full text-sm">
-          <thead className="bg-slate-50 text-left">
+          <thead className="border-b border-slate-200 bg-slate-50/80 text-left">
             <tr>
-              <th className="px-3 py-2">Producto</th>
-              <th className="px-3 py-2">SKU</th>
-              <th className="px-3 py-2">Precio</th>
-              {isAdmin ? <th className="px-3 py-2">Costo</th> : null}
-              {isAdmin ? <th className="px-3 py-2">Stock</th> : null}
-              {isAdmin ? <th className="px-3 py-2">Utilidad</th> : <th className="px-3 py-2">Estado</th>}
-              {isAdmin ? <th className="px-3 py-2">Acciones</th> : null}
+              <th className="px-4 py-3 font-semibold text-slate-700">Producto</th>
+              <th className="px-4 py-3 font-semibold text-slate-700">SKU</th>
+              <th className="px-4 py-3 font-semibold text-slate-700">Precio</th>
+              {isAdmin ? <th className="px-4 py-3 font-semibold text-slate-700">Costo</th> : null}
+              {isAdmin ? <th className="px-4 py-3 font-semibold text-slate-700">Stock</th> : null}
+              {isAdmin ? <th className="px-4 py-3 font-semibold text-slate-700">Utilidad</th> : <th className="px-4 py-3 font-semibold text-slate-700">Estado</th>}
+              {isAdmin ? <th className="px-4 py-3 font-semibold text-slate-700">Acciones</th> : null}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
-            <tr><td colSpan={isAdmin ? 7 : 4} className="px-3 py-6 text-center text-sm text-slate-400">Sin resultados para &quot;{search}&quot;</td></tr>
+            <tr><td colSpan={isAdmin ? 7 : 4} className="px-4 py-12 text-center text-sm text-slate-500">
+              <Search className="mx-auto h-8 w-8 text-slate-300 mb-2" />
+              Sin resultados para &quot;{search}&quot;
+            </td></tr>
           ) : null}
           {filtered.map((p) => {
               const low = p.stock_actual <= p.minimo_stock;
@@ -175,51 +253,58 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                   ? `${(((Number(p.precio_venta) - Number(p.precio_costo)) / Number(p.precio_costo)) * 100).toFixed(1)}%`
                   : "-";
               return (
-                <tr key={p.id} className="border-t border-slate-100">
-                  <td className="px-3 py-2 font-medium">{p.nombre}</td>
-                  <td className="px-3 py-2 text-slate-500">{p.sku_code}</td>
-                  <td className="px-3 py-2">{formatCOP(Number(p.precio_venta))}</td>
+                <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="px-4 py-3 font-bold text-slate-900">{p.nombre}</td>
+                  <td className="px-4 py-3 font-medium text-slate-500">{p.sku_code}</td>
+                  <td className="px-4 py-3 font-semibold">{formatCOP(Number(p.precio_venta))}</td>
                   {isAdmin ? (
-                    <td className="px-3 py-2 text-slate-500">{formatCOP(Number(p.precio_costo))}</td>
+                    <td className="px-4 py-3 text-slate-600">{formatCOP(Number(p.precio_costo))}</td>
                   ) : null}
                   {isAdmin ? (
-                    <td className="px-3 py-2">
-                      <span className={low ? "font-semibold text-amber-700" : ""}>{p.stock_actual}</span>
-                      {low ? <span className="ml-1 text-xs">⚠️</span> : null}
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-sm font-bold ${low ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"}`}>
+                        {p.stock_actual}
+                        {low && <AlertTriangle className="h-3.5 w-3.5" />}
+                      </span>
                     </td>
                   ) : null}
                   {isAdmin ? (
-                    <td className="px-3 py-2 text-slate-600">{utilidad}</td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-600">
+                        <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
+                        {utilidad}
+                      </span>
+                    </td>
                   ) : (
-                    <td className="px-3 py-2">
-                      <span className={p.activo ? "rounded bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700" : "rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-500"}>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex rounded-lg px-2 py-1 text-xs font-bold ${p.activo ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                         {p.activo ? "Activo" : "Inactivo"}
                       </span>
                     </td>
                   )}
                   {isAdmin ? (
-                    <td className="px-3 py-2">
-                      <div className="flex gap-1.5">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() => openEdit(p)}
-                          className="rounded border border-slate-200 bg-white px-2 py-0.5 text-xs text-slate-700 hover:bg-slate-50"
+                          className="flex h-8 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 hover:text-indigo-600"
                         >
-                          ✏️ Editar
+                          <Edit2 className="h-3.5 w-3.5" /> Editar
                         </button>
                         <button
                           type="button"
                           onClick={() => openMovimiento(p)}
-                          className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs text-emerald-700 hover:bg-emerald-100"
+                          className="flex h-8 items-center gap-1.5 rounded-lg border border-indigo-200 bg-indigo-50 px-3 text-xs font-semibold text-indigo-700 shadow-sm hover:bg-indigo-100 hover:text-indigo-800"
                         >
-                          📦 Kardex
+                          <Archive className="h-3.5 w-3.5" /> Kardex
                         </button>
                         <button
                           type="button"
                           onClick={() => setDeleteConfirm(p)}
-                          className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs text-rose-700 hover:bg-rose-100"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 shadow-sm hover:bg-rose-100 hover:text-rose-700"
                         >
-                          🗑 Eliminar
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>
