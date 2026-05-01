@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { KardexModal } from "@/components/inventario/kardex-modal";
 import { SkuInput } from "@/components/ui/sku-input";
+import { NumberField } from "@/components/ui/number-field";
 
 type ProductoRow = {
   id: string;
@@ -141,12 +142,12 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
       {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
 
       <div className="mb-3">
-        <input
-          type="search"
+        <SkuInput
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={setSearch}
+          onDetected={setSearch}
           placeholder="Buscar por nombre o SKU..."
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none sm:max-w-xs"
+          className="sm:max-w-xs"
         />
       </div>
 
@@ -253,20 +254,20 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
               <div className="grid gap-3 sm:grid-cols-3">
                 <label className="space-y-1 text-xs text-slate-600">
                   <span>Costo</span>
-                  <input type="number" min={0} value={editCosto} onChange={(e) => handleEditCosto(Number(e.target.value))} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
+                  <NumberField value={editCosto} min={0} onChange={handleEditCosto} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
                 </label>
                 <label className="space-y-1 text-xs text-slate-600">
                   <span>Utilidad %</span>
-                  <input type="number" min={0} step={0.1} value={editUtilidad} onChange={(e) => handleEditUtilidad(Number(e.target.value))} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
+                  <NumberField value={editUtilidad} min={0} step={0.1} onChange={handleEditUtilidad} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
                 </label>
                 <label className="space-y-1 text-xs text-slate-600">
                   <span>Precio venta *</span>
-                  <input type="number" min={0} value={editPrecio} onChange={(e) => handleEditPrecio(Number(e.target.value))} required className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
+                  <NumberField value={editPrecio} min={0} onChange={handleEditPrecio} required className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
                 </label>
               </div>
               <label className="block space-y-1 text-xs text-slate-600">
                 <span>Stock mínimo</span>
-                <input type="number" min={0} value={editMinimo} onChange={(e) => setEditMinimo(Number(e.target.value))} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
+                <NumberField value={editMinimo} min={0} onChange={setEditMinimo} className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none" />
               </label>
               <div className="flex justify-end">
                 <button type="submit" disabled={editLoading} className="rounded bg-slate-900 px-4 py-1.5 text-sm text-white disabled:opacity-60">
@@ -325,11 +326,10 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                 <div className={movModal.tipo === "entrada" ? "grid gap-3 sm:grid-cols-2" : ""}>
                   <label className="block space-y-1 text-xs text-slate-600">
                     <span>Cantidad *</span>
-                    <input
-                      type="number"
-                      min={1}
+                    <NumberField
                       value={movCantidad}
-                      onChange={(e) => setMovCantidad(Number(e.target.value))}
+                      min={1}
+                      onChange={setMovCantidad}
                       required
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
                     />
@@ -337,11 +337,10 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                   {movModal.tipo === "entrada" ? (
                     <label className="block space-y-1 text-xs text-slate-600">
                       <span>Costo unitario</span>
-                      <input
-                        type="number"
-                        min={0}
+                      <NumberField
                         value={movCosto}
-                        onChange={(e) => setMovCosto(Number(e.target.value))}
+                        min={0}
+                        onChange={setMovCosto}
                         placeholder="0"
                         className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:outline-none"
                       />

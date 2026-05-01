@@ -13,7 +13,11 @@ export default async function ImprimirPage() {
   }
 
   const supabase = createClient();
-  const { data } = await supabase.from("negocio").select("*").limit(1).single();
+  const { data } = await supabase
+    .from("negocio")
+    .select("*, negocio_mensajes(*)")
+    .limit(1)
+    .single();
   const negocio = data as Negocio | null;
 
   return <PrintCenter negocio={negocio} />;

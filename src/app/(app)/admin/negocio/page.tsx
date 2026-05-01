@@ -13,7 +13,7 @@ export default async function AdminNegocioPage() {
 
   const { data } = await supabase
     .from("negocio")
-    .select("*")
+    .select("*, negocio_mensajes(*)")
     .limit(1)
     .single();
 

@@ -36,9 +36,18 @@ export type Negocio = {
   nombre: string;
   direccion: string | null;
   telefono: string | null;
+  email: string | null;
   nit: string | null;
-  mensaje_agradecimiento: string;
   updated_at: string;
+  negocio_mensajes?: NegocioMensaje[];
+};
+
+export type NegocioMensaje = {
+  id: string;
+  negocio_id: string;
+  tipo: "encabezado" | "cierre";
+  orden: number;
+  texto: string;
 };
 
 export type Factura = {
@@ -49,7 +58,7 @@ export type Factura = {
   subtotal: number;
   descuento_total: number;
   total: number;
-  estado: "pendiente_impresion" | "impresa";
+  estado: "pendiente_impresion" | "impresa" | "anulada";
   created_at: string;
 };
 

@@ -20,12 +20,14 @@ type FacturaRow = {
   total: number;
   estado: string;
   created_at: string;
+  cliente: string;
   vendedor: string;
   items: ItemResumen[];
 };
 
 type HistorialClientProps = {
   facturas: FacturaRow[];
+  isAdmin: boolean;
 };
 
 const ESTADO_BADGE: Record<string, string> = {
@@ -40,7 +42,7 @@ const ESTADO_LABEL: Record<string, string> = {
   anulada: "Anulada",
 };
 
-export function HistorialClient({ facturas }: HistorialClientProps) {
+export function HistorialClient({ facturas, isAdmin }: HistorialClientProps) {
   const router = useRouter();
   const [confirm, setConfirm] = useState<FacturaRow | null>(null);
   const [loading, setLoading] = useState(false);
@@ -72,6 +74,7 @@ export function HistorialClient({ facturas }: HistorialClientProps) {
             <tr>
               <th className="px-3 py-2">N°</th>
               <th className="px-3 py-2">Fecha</th>
+              <th className="px-3 py-2">Cliente</th>
               <th className="px-3 py-2">Vendedor</th>
               <th className="px-3 py-2">Subtotal</th>
               <th className="px-3 py-2">Desc.</th>
@@ -83,7 +86,7 @@ export function HistorialClient({ facturas }: HistorialClientProps) {
           <tbody>
             {facturas.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-sm text-slate-400">
+                <td colSpan={9} className="px-3 py-6 text-center text-sm text-slate-400">
                   No hay facturas con los filtros aplicados.
                 </td>
               </tr>
@@ -103,6 +106,7 @@ export function HistorialClient({ facturas }: HistorialClientProps) {
                     minute: "2-digit",
                   })}
                 </td>
+                <td className="px-3 py-2">{f.cliente}</td>
                 <td className="px-3 py-2">{f.vendedor}</td>
                 <td className="px-3 py-2">{formatCOP(Number(f.subtotal))}</td>
                 <td className="px-3 py-2">{formatCOP(Number(f.descuento_total))}</td>
@@ -120,7 +124,7 @@ export function HistorialClient({ facturas }: HistorialClientProps) {
                     >
                       Ver
                     </Link>
-                    {f.estado !== "anulada" ? (
+                    {isAdmin && f.estado !== "anulada" ? (
                       <button
                         type="button"
                         onClick={() => setConfirm(f)}

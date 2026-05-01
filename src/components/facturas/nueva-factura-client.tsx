@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { TIPO_DESCUENTO } from "@/lib/constants";
 import { useInvoiceCart, useInvoiceTotals } from "@/store/use-invoice-cart";
 import { calcItemSubtotal, formatCOP } from "@/lib/invoice-calculations";
+import { TIPO_DESCUENTO } from "@/lib/constants";
 import { SkuInput } from "@/components/ui/sku-input";
+import { NumberField } from "@/components/ui/number-field";
 import { ClienteAutocomplete } from "@/components/facturas/cliente-autocomplete";
 
 type ProductoCatalog = {
@@ -130,7 +131,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
     setSuccess(null);
 
     const payload: Record<string, unknown> = {
-      items: items.map((item) => ({
+      items: items.map((item: any) => ({
         producto_id: item.productoId,
         cantidad: item.cantidad,
         descuento_item: item.descuentoItem,
@@ -272,18 +273,17 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
               </tr>
             </thead>
             <tbody>
-              {items.map((item) => (
+              {items.map((item: any) => (
                 <tr key={item.productoId} className="border-t border-slate-100">
                   <td className="px-2 py-1.5">
                     <p className="max-w-[100px] truncate font-medium">{item.nombre}</p>
                     <p className="text-slate-400">{formatCOP(item.precioUnitario)}</p>
                   </td>
                   <td className="px-2 py-1.5 text-right">
-                    <input
-                      type="number"
-                      min={1}
+                    <NumberField
                       value={item.cantidad}
-                      onChange={(e) => updateItem(item.productoId, { cantidad: Number(e.target.value) })}
+                      min={1}
+                      onChange={(v) => updateItem(item.productoId, { cantidad: v })}
                       className="w-12 rounded border border-slate-300 px-1 py-0.5 text-right text-xs"
                     />
                   </td>
@@ -299,11 +299,10 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
                         <option value={TIPO_DESCUENTO.VALOR}>$</option>
                         <option value={TIPO_DESCUENTO.PORCENTAJE}>%</option>
                       </select>
-                      <input
-                        type="number"
-                        min={0}
+                      <NumberField
                         value={item.descuentoItem}
-                        onChange={(e) => updateItem(item.productoId, { descuentoItem: Number(e.target.value) })}
+                        min={0}
+                        onChange={(v) => updateItem(item.productoId, { descuentoItem: v })}
                         className="w-14 rounded border border-slate-300 px-1 py-0.5 text-right text-xs"
                       />
                     </div>
@@ -352,11 +351,10 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
             <option value={TIPO_DESCUENTO.VALOR}>Valor $</option>
             <option value={TIPO_DESCUENTO.PORCENTAJE}>Porcentaje %</option>
           </select>
-          <input
-            type="number"
-            min={0}
+          <NumberField
             value={descuentoGlobalValor}
-            onChange={(e) => setDescuentoGlobalValor(Number(e.target.value))}
+            min={0}
+            onChange={setDescuentoGlobalValor}
             className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
           />
         </div>

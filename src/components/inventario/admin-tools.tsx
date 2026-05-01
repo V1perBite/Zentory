@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { SkuInput } from "@/components/ui/sku-input";
+import { NumberField } from "@/components/ui/number-field";
 import { ImportCsvModal } from "@/components/inventario/import-csv-modal";
 
 type ProductoRow = {
@@ -178,34 +179,31 @@ export function AdminTools({ productos }: AdminToolsProps) {
                 <div className="grid gap-3 sm:grid-cols-3">
                   <label className="space-y-1 text-xs text-slate-600">
                     <span>Costo</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <NumberField
                       value={costo}
-                      onChange={(event) => handleCreateCostoChange(Number(event.target.value))}
+                      min={0}
+                      onChange={handleCreateCostoChange}
                       placeholder="0"
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
                     />
                   </label>
                   <label className="space-y-1 text-xs text-slate-600">
                     <span>Utilidad %</span>
-                    <input
-                      type="number"
+                    <NumberField
+                      value={utilidad}
                       min={0}
                       step={0.1}
-                      value={utilidad}
-                      onChange={(event) => handleCreateUtilidadChange(Number(event.target.value))}
+                      onChange={handleCreateUtilidadChange}
                       placeholder="0"
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
                     />
                   </label>
                   <label className="space-y-1 text-xs text-slate-600">
                     <span>Precio de venta *</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <NumberField
                       value={precio}
-                      onChange={(event) => handleCreatePrecioChange(Number(event.target.value))}
+                      min={0}
+                      onChange={handleCreatePrecioChange}
                       placeholder="0"
                       required
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
@@ -215,11 +213,10 @@ export function AdminTools({ productos }: AdminToolsProps) {
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="space-y-1 text-xs text-slate-600">
                     <span>Stock inicial *</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <NumberField
                       value={stock}
-                      onChange={(event) => setStock(Number(event.target.value))}
+                      min={0}
+                      onChange={setStock}
                       placeholder="0"
                       required
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"
@@ -227,11 +224,10 @@ export function AdminTools({ productos }: AdminToolsProps) {
                   </label>
                   <label className="space-y-1 text-xs text-slate-600">
                     <span>Stock mínimo *</span>
-                    <input
-                      type="number"
-                      min={0}
+                    <NumberField
                       value={minimo}
-                      onChange={(event) => setMinimo(Number(event.target.value))}
+                      min={0}
+                      onChange={setMinimo}
                       placeholder="0"
                       required
                       className="w-full rounded border border-slate-300 px-2 py-1.5 text-sm focus:border-emerald-500 focus:outline-none"

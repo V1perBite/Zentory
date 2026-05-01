@@ -26,20 +26,6 @@ export default async function InventarioPage() {
         ) : null}
       </div>
 
-      <InventarioClient
-        productos={(productos ?? []).map((p) => ({
-          id: p.id,
-          nombre: p.nombre,
-          sku_code: p.sku_code,
-          precio_venta: Number(p.precio_venta),
-          precio_costo: Number(p.precio_costo ?? 0),
-          stock_actual: p.stock_actual,
-          minimo_stock: p.minimo_stock,
-          activo: p.activo,
-        }))}
-        isAdmin={profile.rol === ROLES.ADMIN}
-      />
-
       {profile.rol === ROLES.ADMIN ? (
         <AdminTools
           productos={(productos ?? []).map((p) => ({
@@ -54,6 +40,20 @@ export default async function InventarioPage() {
           }))}
         />
       ) : null}
+
+      <InventarioClient
+        productos={(productos ?? []).map((p) => ({
+          id: p.id,
+          nombre: p.nombre,
+          sku_code: p.sku_code,
+          precio_venta: Number(p.precio_venta),
+          precio_costo: Number(p.precio_costo ?? 0),
+          stock_actual: p.stock_actual,
+          minimo_stock: p.minimo_stock,
+          activo: p.activo,
+        }))}
+        isAdmin={profile.rol === ROLES.ADMIN}
+      />
 
     </section>
   );

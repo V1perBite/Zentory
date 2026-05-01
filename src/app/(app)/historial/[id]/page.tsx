@@ -29,7 +29,11 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
     notFound();
   }
 
-  const { data: negocioData } = await supabase.from("negocio").select("*").limit(1).single();
+  const { data: negocioData } = await supabase
+    .from("negocio")
+    .select("*, negocio_mensajes(*)")
+    .limit(1)
+    .single();
   const negocio = negocioData as Negocio | null;
 
   if (profile.rol !== ROLES.ADMIN && factura.vendedor_id !== profile.id) {
