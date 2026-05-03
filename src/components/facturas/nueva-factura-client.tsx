@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useInvoiceCart, useInvoiceTotals } from "@/store/use-invoice-cart";
 import { calcItemSubtotal, formatCOP } from "@/lib/invoice-calculations";
@@ -44,6 +44,22 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  type FlyParticle = { id: number; x: number; y: number; label: string };
+  const [flyParticles, setFlyParticles] = useState<FlyParticle[]>([]);
+  const fabRef = useRef<HTMLButtonElement>(null);
+  const flyCounter = useRef(0);
+
+  const triggerFlyAnimation = useCallback((e: React.MouseEvent, label: string) => {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const startX = rect.left + rect.width / 2;
+    const startY = rect.top + rect.height / 2;
+    const id = ++flyCounter.current;
+    setFlyParticles((prev) => [...prev, { id, x: startX, y: startY, label }]);
+    setTimeout(() => {
+      setFlyParticles((prev) => prev.filter((p) => p.id !== id));
+    }, 700);
+  }, []);
 
   const [clienteId, setClienteId] = useState<string | null>(null);
   const [clienteNombre, setClienteNombre] = useState("Consumidor final");
@@ -211,14 +227,15 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
           <button
             key={p.id}
             type="button"
-            onClick={() =>
+            onClick={(e) => {
+              triggerFlyAnimation(e, p.nombre);
               addOrIncrementItem({
                 productoId: p.id,
                 nombre: p.nombre,
                 skuCode: p.sku_code,
                 precioUnitario: Number(p.precio_venta),
-              })
-            }
+              });
+            }}
             className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all hover:border-indigo-300 hover:shadow-md active:scale-95"
           >
             <div className="mb-2">
@@ -270,7 +287,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 space-y-3 pb-32 lg:pb-0">
+      <div className="flex-1 min-h-0 space-y-3 pb-56 lg:pb-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Carrito de Compra ({items.length})
@@ -475,6 +492,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
 
       {/* FAB Mobile Catalog */}
       <button
+        ref={fabRef}
         type="button"
         onClick={() => setShowCatalogModal(true)}
         className="fixed bottom-[110px] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl lg:hidden active:scale-95 transition-transform"
@@ -482,6 +500,23 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
       >
         <PackageSearch className="h-6 w-6" />
       </button>
+
+      {/* Fly-to-cart particles */}
+      {flyParticles.map((p) => (
+        <div
+          key={p.id}
+          className="pointer-events-none fixed z-[200] flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg"
+          style={{
+            left: p.x,
+            top: p.y,
+            transform: "translate(-50%, -50%)",
+            animation: "flyToCart 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards",
+          }}
+        >
+          <ShoppingCart className="h-3 w-3" />
+          <span className="max-w-[100px] truncate">{p.label}</span>
+        </div>
+      ))}
 
       {/* Modal Mobile Catalog */}
       {showCatalogModal ? (

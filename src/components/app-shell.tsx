@@ -32,22 +32,23 @@ export function AppShell({ profile, children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const baseLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/inventario", label: "Inventario", icon: Package },
+  const vendedorLinks = [
     { href: "/facturas", label: "Facturas", icon: FileText },
-    { href: "/historial", label: "Historial", icon: History },
+    { href: "/inventario", label: "Inventario", icon: Package },
   ];
 
   const links =
     profile.rol === ROLES.ADMIN
       ? [
-          ...baseLinks,
+          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/inventario", label: "Inventario", icon: Package },
+          { href: "/facturas", label: "Facturas", icon: FileText },
+          { href: "/historial", label: "Historial", icon: History },
           { href: "/imprimir", label: "Imprimir", icon: Printer },
           { href: "/admin/negocio", label: "Negocio", icon: Settings },
           { href: "/admin/usuarios", label: "Usuarios", icon: Users },
         ]
-      : baseLinks;
+      : vendedorLinks;
 
   return (
     <div className="min-h-screen bg-slate-50">

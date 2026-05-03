@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { createClient } from "@/lib/supabase/server";
@@ -14,6 +15,11 @@ type MovimientoRow = {
 
 export default async function DashboardPage() {
   const profile = await requireProfile();
+
+  if (profile.rol !== ROLES.ADMIN) {
+    redirect("/facturas/nueva");
+  }
+
   const supabase = createClient();
 
   const { data: productos } = await supabase
