@@ -12,10 +12,21 @@ export default async function AdminUsuariosPage() {
 
   const { data: usuarios } = await supabase
     .from("usuarios")
-    .select("id,nombre,email,rol,activo,puede_crear_productos")
+    .select("id,nombre,email,rol,activo")
     .order("created_at", { ascending: true });
 
-  const rows = (usuarios ?? []) as {
+  const { data: permisos } = await supabase
+    .from("usuarios")
+    .select("id,puede_crear_productos");
+
+  const permisosMap = new Map(
+    (permisos ?? []).map((p: { id: string; puede_crear_productos: boolean }) => [p.id, p.puede_crear_productos])
+  );
+
+  const rows = (usuarios ?? []).map((u) => ({
+    ...u,
+    puede_crear_productos: permisosMap.get(u.id) ?? false,
+  })) as {
     id: string;
     nombre: string;
     email: string;

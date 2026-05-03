@@ -130,21 +130,6 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
                   </span>
                 </td>
                 <td className="px-3 py-2">
-                  <button
-                    type="button"
-                    disabled={toggling === u.id || u.id === currentUserId}
-                    onClick={() => handleToggle(u.id, u.activo)}
-                    title={u.id === currentUserId ? "No puedes desactivarte a ti mismo" : ""}
-                    className={`rounded px-2 py-0.5 text-xs disabled:opacity-40 ${
-                      u.activo
-                        ? "border border-amber-300 text-amber-700 hover:bg-amber-50"
-                        : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-                    }`}
-                  >
-                    {toggling === u.id ? "..." : u.activo ? "Desactivar" : "Activar"}
-                  </button>
-                </td>
-                <td className="px-3 py-2">
                   {u.rol === ROLES.ADMIN ? (
                     <span className="text-xs text-slate-400">Siempre</span>
                   ) : (
@@ -161,6 +146,21 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
                       {togglingCrear === u.id ? "..." : u.puede_crear_productos ? "✓ Activo" : "Inactivo"}
                     </button>
                   )}
+                </td>
+                <td className="px-3 py-2">
+                  <button
+                    type="button"
+                    disabled={toggling === u.id || u.id === currentUserId}
+                    onClick={() => handleToggle(u.id, u.activo)}
+                    title={u.id === currentUserId ? "No puedes desactivarte a ti mismo" : ""}
+                    className={`rounded px-2 py-0.5 text-xs disabled:opacity-40 ${
+                      u.activo
+                        ? "border border-amber-300 text-amber-700 hover:bg-amber-50"
+                        : "border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    }`}
+                  >
+                    {toggling === u.id ? "..." : u.activo ? "Desactivar" : "Activar"}
+                  </button>
                 </td>
               </tr>
             ))}
