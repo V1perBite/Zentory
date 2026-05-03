@@ -14,7 +14,13 @@ export default async function InventarioPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const puedeCrear = profile.rol === ROLES.ADMIN || profile.puede_crear_productos === true;
+  const { data: permisoData } = await supabase
+    .from("usuarios")
+    .select("puede_crear_productos")
+    .eq("id", profile.id)
+    .single();
+
+  const puedeCrear = profile.rol === ROLES.ADMIN || permisoData?.puede_crear_productos === true;
 
   return (
     <section className="space-y-4">
