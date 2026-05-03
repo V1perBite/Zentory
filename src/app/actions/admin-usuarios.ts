@@ -53,3 +53,20 @@ export async function toggleUsuarioActivo(params: {
   if (error) return { error: error.message };
   return {};
 }
+
+export async function togglePuedeCrearProductos(params: {
+  id: string;
+  puedeCrear: boolean;
+}): Promise<{ error?: string }> {
+  const profile = await requireProfile();
+  if (profile.rol !== ROLES.ADMIN) return { error: "Sin permisos." };
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("usuarios")
+    .update({ puede_crear_productos: !params.puedeCrear })
+    .eq("id", params.id);
+
+  if (error) return { error: error.message };
+  return {};
+}

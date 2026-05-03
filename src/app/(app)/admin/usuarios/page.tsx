@@ -12,7 +12,7 @@ export default async function AdminUsuariosPage() {
 
   const { data: usuarios } = await supabase
     .from("usuarios")
-    .select("id,nombre,email,rol,activo")
+    .select("id,nombre,email,rol,activo,puede_crear_productos")
     .order("created_at", { ascending: true });
 
   const rows = (usuarios ?? []) as {
@@ -21,6 +21,7 @@ export default async function AdminUsuariosPage() {
     email: string;
     rol: string;
     activo: boolean;
+    puede_crear_productos: boolean;
   }[];
 
   return (

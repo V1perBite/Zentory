@@ -6,6 +6,7 @@ export type Usuario = {
   email: string | null;
   rol: UserRole;
   activo: boolean;
+  puede_crear_productos: boolean;
   created_at: string;
 };
 

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createUsuario, toggleUsuarioActivo } from "@/app/actions/admin-usuarios";
+import { createUsuario, toggleUsuarioActivo, togglePuedeCrearProductos } from "@/app/actions/admin-usuarios";
 import { ROLES } from "@/lib/constants";
 import type { UserRole } from "@/lib/constants";
 
@@ -12,6 +12,7 @@ type UsuarioRow = {
   email: string;
   rol: string;
   activo: boolean;
+  puede_crear_productos: boolean;
 };
 
 type UsuariosClientProps = {
@@ -28,6 +29,7 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
   const [rol, setRol] = useState<UserRole>(ROLES.VENDEDOR);
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+  const [togglingCrear, setTogglingCrear] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -66,6 +68,18 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
     }
   };
 
+  const handleToggleCrear = async (id: string, puedeCrear: boolean) => {
+    setTogglingCrear(id);
+    setError(null);
+    const result = await togglePuedeCrearProductos({ id, puedeCrear });
+    setTogglingCrear(null);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      router.refresh();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -90,6 +104,7 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
               <th className="px-3 py-2">Email</th>
               <th className="px-3 py-2">Rol</th>
               <th className="px-3 py-2">Estado</th>
+              <th className="px-3 py-2">Crear productos</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -128,6 +143,24 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
                   >
                     {toggling === u.id ? "..." : u.activo ? "Desactivar" : "Activar"}
                   </button>
+                </td>
+                <td className="px-3 py-2">
+                  {u.rol === ROLES.ADMIN ? (
+                    <span className="text-xs text-slate-400">Siempre</span>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={togglingCrear === u.id}
+                      onClick={() => handleToggleCrear(u.id, u.puede_crear_productos)}
+                      className={`rounded px-2 py-0.5 text-xs disabled:opacity-40 ${
+                        u.puede_crear_productos
+                          ? "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                          : "border border-slate-300 text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {togglingCrear === u.id ? "..." : u.puede_crear_productos ? "✓ Activo" : "Inactivo"}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

@@ -14,6 +14,8 @@ export default async function InventarioPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
+  const puedeCrear = profile.rol === ROLES.ADMIN || profile.puede_crear_productos === true;
+
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between">
@@ -23,10 +25,12 @@ export default async function InventarioPage() {
         </div>
         {profile.rol === ROLES.ADMIN ? (
           <p className="text-xs text-slate-500">CRUD y ajustes de stock habilitados para admin.</p>
+        ) : puedeCrear ? (
+          <p className="text-xs text-amber-600 font-medium">Permiso temporal de creación activo.</p>
         ) : null}
       </div>
 
-      {profile.rol === ROLES.ADMIN ? (
+      {puedeCrear ? (
         <AdminTools
           productos={(productos ?? []).map((p) => ({
             id: p.id,
