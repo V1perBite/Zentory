@@ -286,7 +286,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 space-y-3 pb-44 lg:pb-0">
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-44 lg:pb-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Carrito de Compra ({items.length})
