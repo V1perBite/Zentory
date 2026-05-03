@@ -47,7 +47,6 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
 
   type FlyParticle = { id: number; x: number; y: number; label: string };
   const [flyParticles, setFlyParticles] = useState<FlyParticle[]>([]);
-  const fabRef = useRef<HTMLButtonElement>(null);
   const flyCounter = useRef(0);
 
   const triggerFlyAnimation = useCallback((e: React.MouseEvent, label: string) => {
@@ -287,7 +286,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 space-y-3 pb-56 lg:pb-0">
+      <div className="flex-1 min-h-0 space-y-3 pb-44 lg:pb-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Carrito de Compra ({items.length})
@@ -486,20 +485,17 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
             <h1 className="text-xl font-black text-slate-900">Nueva Venta</h1>
             <p className="text-xs font-medium text-slate-500">Punto de pago</p>
           </div>
+          <button
+            type="button"
+            onClick={() => setShowCatalogModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm active:bg-indigo-700 active:scale-95 transition-all"
+          >
+            <PackageSearch className="h-4 w-4" />
+            Catálogo
+          </button>
         </div>
         {invoicePanel}
       </div>
-
-      {/* FAB Mobile Catalog */}
-      <button
-        ref={fabRef}
-        type="button"
-        onClick={() => setShowCatalogModal(true)}
-        className="fixed bottom-[110px] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-xl lg:hidden active:scale-95 transition-transform"
-        aria-label="Ver catálogo"
-      >
-        <PackageSearch className="h-6 w-6" />
-      </button>
 
       {/* Fly-to-cart particles */}
       {flyParticles.map((p) => (
