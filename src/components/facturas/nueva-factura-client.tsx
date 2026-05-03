@@ -263,7 +263,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
   );
 
   const invoicePanel = (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex flex-col gap-4 lg:h-full">
       {success ? <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 border border-emerald-100">{success}</p> : null}
       {error ? <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 border border-rose-100">{error}</p> : null}
 
@@ -286,7 +286,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
         />
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pb-44 lg:pb-0">
+      <div className="space-y-3 pb-48 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pb-0">
         <div className="flex items-center justify-between">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
             Carrito de Compra ({items.length})
@@ -461,7 +461,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
   );
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col lg:flex-row lg:gap-6">
+    <div className="flex flex-col lg:h-[calc(100vh-8rem)] lg:flex-row lg:gap-6">
       {/* Desktop: Catálogo Izquierda */}
       <div className="hidden lg:flex lg:w-[55%] flex-col bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -479,7 +479,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
       </div>
 
       {/* Desktop & Mobile: Carrito (Derecha o Full) */}
-      <div className="flex-1 flex flex-col min-h-0 lg:w-[45%]">
+      <div className="flex flex-col lg:flex-1 lg:min-h-0 lg:w-[45%]">
         <div className="lg:hidden mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-black text-slate-900">Nueva Venta</h1>
