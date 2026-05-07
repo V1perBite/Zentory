@@ -42,15 +42,17 @@ export function Ticket({ factura, negocio, printMode = false }: TicketProps) {
 
       <section className="border-b border-dashed border-black py-2">
         {factura.items.map((item) => (
-          <div key={item.id} className="mb-2">
-            <p className="font-semibold">{item.producto.nombre}</p>
-            <p>
-              {item.cantidad} x {formatCOP(Number(item.precio_unitario))}
-            </p>
-            {Number(item.descuento_item) > 0 ? (
-              <p>Desc. ({item.tipo_descuento_item}): {Number(item.descuento_item).toFixed(item.tipo_descuento_item === "porcentaje" ? 1 : 0)}{item.tipo_descuento_item === "porcentaje" ? "%" : ""}</p>
-            ) : null}
-            <p>Subtotal: {formatCOP(Number(item.subtotal_item))}</p>
+          <div key={item.id} className="mb-2 flex justify-between items-end">
+            <div>
+              <p className="font-semibold">{item.producto.nombre}</p>
+              <p>
+                {item.cantidad} x {formatCOP(Number(item.precio_unitario))}
+              </p>
+              {Number(item.descuento_item) > 0 ? (
+                <p>Desc. ({item.tipo_descuento_item}): {Number(item.descuento_item).toFixed(item.tipo_descuento_item === "porcentaje" ? 1 : 0)}{item.tipo_descuento_item === "porcentaje" ? "%" : ""}</p>
+              ) : null}
+            </div>
+            <p className="font-semibold">{formatCOP(Number(item.subtotal_item))}</p>
           </div>
         ))}
       </section>
