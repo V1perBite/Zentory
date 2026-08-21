@@ -36,12 +36,12 @@ export function FullscreenScanner({ onDetected, onClose }: FullscreenScannerProp
       try {
         let stream: MediaStream;
         try {
-          // Attempt 1: 1080p with continuous focus
+          // Attempt 1: 4K resolution with continuous focus
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: { ideal: "environment" },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
+              width: { ideal: 3840 },
+              height: { ideal: 2160 },
               advanced: [{ focusMode: "continuous" } as any],
             },
             audio: false,
@@ -51,8 +51,8 @@ export function FullscreenScanner({ onDetected, onClose }: FullscreenScannerProp
           stream = await navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: { ideal: "environment" },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 },
+              width: { ideal: 3840 },
+              height: { ideal: 2160 },
             },
             audio: false,
           });
