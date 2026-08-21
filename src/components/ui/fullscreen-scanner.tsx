@@ -34,14 +34,29 @@ export function FullscreenScanner({ onDetected, onClose }: FullscreenScannerProp
 
     async function initCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: "environment" },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
-          },
-          audio: false,
-        });
+        let stream: MediaStream;
+        try {
+          // Attempt 1: 1080p with continuous focus
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              advanced: [{ focusMode: "continuous" } as any],
+            },
+            audio: false,
+          });
+        } catch (e) {
+          // Attempt 2: Fallback if overconstrained (e.g., focusMode not supported)
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            },
+            audio: false,
+          });
+        }
 
         if (!active) {
           stream.getTracks().forEach((t) => t.stop());
