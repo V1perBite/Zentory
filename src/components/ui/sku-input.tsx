@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import { useState } from "react";
+import { FullscreenScanner } from "./fullscreen-scanner";
 
 type SkuInputProps = {
   value: string;
@@ -22,39 +22,13 @@ export function SkuInput({
   className = "",
   id,
 }: SkuInputProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [scanning, setScanning] = useState(false);
-  const [scanError, setScanError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!scanning || !videoRef.current) return;
-
-    const codeReader = new BrowserMultiFormatReader();
-    let cancelled = false;
-    let controls: { stop: () => void } | undefined;
-
-    void codeReader
-      .decodeFromVideoDevice(undefined, videoRef.current, (result, err) => {
-        if (result && !cancelled) {
-          const text = result.getText();
-          onChange(text);
-          onDetected?.(text);
-          setScanning(false);
-        }
-        if (err && !String(err.message).toLowerCase().includes("not found")) {
-          setScanError(err.message);
-        }
-      })
-      .then((ctrl) => {
-        controls = ctrl;
-      })
-      .catch((err) => setScanError(err.message));
-
-    return () => {
-      cancelled = true;
-      controls?.stop();
-    };
-  }, [scanning, onChange, onDetected]);
+  const handleDetected = (code: string) => {
+    onChange(code);
+    onDetected?.(code);
+    setScanning(false);
+  };
 
   return (
     <div className="space-y-1">
@@ -70,7 +44,7 @@ export function SkuInput({
         <button
           type="button"
           title="Escanear con cámara"
-          onClick={() => { setScanError(null); setScanning((s) => !s); }}
+          onClick={() => setScanning((s) => !s)}
           className="absolute inset-y-0 right-0 flex items-center px-2 text-slate-400 hover:text-emerald-600"
         >
           {scanning ? (
@@ -85,11 +59,12 @@ export function SkuInput({
         </button>
       </div>
 
-      {scanning ? (
-        <video ref={videoRef} className="h-40 w-full rounded-md bg-black object-cover" muted />
-      ) : null}
-
-      {scanError ? <p className="text-xs text-rose-600">{scanError}</p> : null}
+      {scanning && (
+        <FullscreenScanner
+          onDetected={handleDetected}
+          onClose={() => setScanning(false)}
+        />
+      )}
     </div>
   );
 }
