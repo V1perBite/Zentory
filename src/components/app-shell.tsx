@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   LogOut,
-  Store
+  Store,
+  BarChart3
 } from "lucide-react";
 import { SignOutButton } from "@/components/signout-button";
 import type { Usuario } from "@/lib/types";
@@ -43,6 +44,7 @@ export function AppShell({ profile, children }: AppShellProps) {
           { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/inventario", label: "Inventario", icon: Package },
           { href: "/facturas", label: "Facturas", icon: FileText },
+          { href: "/reportes", label: "Reportes", icon: BarChart3 },
           { href: "/historial", label: "Historial", icon: History },
           { href: "/imprimir", label: "Imprimir", icon: Printer },
           { href: "/admin/negocio", label: "Negocio", icon: Settings },
