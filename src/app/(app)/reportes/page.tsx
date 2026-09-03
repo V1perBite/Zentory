@@ -19,92 +19,114 @@ import Link from "next/link";
 
 const REPORTES = [
   {
+    id: "ventas-periodo",
     titulo: "Ventas por Período",
     descripcion: "Ventas diarias, semanales o mensuales. Identifica tendencias.",
     icono: TrendingUp,
     color: "text-blue-600",
     bgColor: "bg-blue-100",
-    href: "#",
+    href: "/reportes/ventas-periodo",
+    disponible: true,
   },
   {
+    id: "productos-top",
     titulo: "Productos Más/Menos Vendidos",
     descripcion: "Qué productos rotan más y cuáles considerar liquidar.",
     icono: ArrowDownToLine,
     color: "text-emerald-600",
     bgColor: "bg-emerald-100",
-    href: "#",
+    href: "/reportes/productos-top",
+    disponible: true,
   },
   {
+    id: "rentabilidad",
     titulo: "Rentabilidad por Producto",
     descripcion: "Margen de ganancia de cada producto.",
     icono: DollarSign,
     color: "text-amber-600",
     bgColor: "bg-amber-100",
-    href: "#",
+    href: "/reportes/rentabilidad",
+    disponible: true,
   },
   {
+    id: "ventas-vendedor",
     titulo: "Ventas por Vendedor",
     descripcion: "Rendimiento individual y cálculo de comisiones.",
     icono: Users,
     color: "text-purple-600",
     bgColor: "bg-purple-100",
-    href: "#",
+    href: "/reportes/ventas-vendedor",
+    disponible: true,
   },
   {
+    id: "bajo-stock",
     titulo: "Alerta de Bajo Stock",
     descripcion: "Productos que están por agotarse (punto de reorden).",
     icono: AlertTriangle,
     color: "text-red-600",
     bgColor: "bg-red-100",
-    href: "#",
+    href: "/reportes/bajo-stock",
+    disponible: true,
   },
   {
+    id: "valoracion-inventario",
     titulo: "Valoración del Inventario",
     descripcion: "Capital invertido en mercancía actual.",
     icono: PackageOpen,
     color: "text-indigo-600",
     bgColor: "bg-indigo-100",
-    href: "#",
+    href: "/reportes/valoracion-inventario",
+    disponible: true,
   },
   {
+    id: "rotacion",
     titulo: "Rotación de Inventario",
     descripcion: "Velocidad a la que se vende el inventario.",
     icono: RefreshCw,
     color: "text-cyan-600",
     bgColor: "bg-cyan-100",
-    href: "#",
+    href: "/reportes/rotacion",
+    disponible: true,
   },
   {
+    id: "mermas",
     titulo: "Mermas / Ajustes",
     descripcion: "Productos dañados, caducados o perdidos.",
     icono: FileMinus,
     color: "text-rose-600",
     bgColor: "bg-rose-100",
-    href: "#",
+    href: "/reportes/mermas",
+    disponible: true,
   },
   {
+    id: "mejores-clientes",
     titulo: "Mejores Clientes",
     descripcion: "Top clientes por volumen de compras.",
     icono: Star,
     color: "text-yellow-600",
     bgColor: "bg-yellow-100",
-    href: "#",
+    href: "/reportes/mejores-clientes",
+    disponible: true,
   },
   {
+    id: "historial-cliente",
     titulo: "Historial por Cliente",
     descripcion: "Qué compra cada persona (cross-selling).",
     icono: History,
     color: "text-teal-600",
     bgColor: "bg-teal-100",
-    href: "#",
+    href: "/reportes/historial-cliente",
+    disponible: true,
   },
   {
+    id: "corte-caja",
     titulo: "Corte de Caja Diario",
     descripcion: "Resumen de ingresos vs egresos del día.",
     icono: BarChart3,
     color: "text-lime-600",
     bgColor: "bg-lime-100",
-    href: "#",
+    href: "/reportes/corte-caja",
+    disponible: true,
   }
 ];
 
@@ -141,10 +163,12 @@ export default async function ReportesPage() {
                 {reporte.descripcion}
               </p>
               
-              <div className="mt-4 flex items-center text-xs font-medium text-slate-400">
-                <Lock className="mr-1.5 h-3.5 w-3.5" />
-                <span>Próximamente</span>
-              </div>
+              {!reporte.disponible && (
+                <div className="mt-4 flex items-center text-xs font-medium text-slate-400">
+                  <Lock className="mr-1.5 h-3.5 w-3.5" />
+                  <span>Próximamente</span>
+                </div>
+              )}
             </Link>
           );
         })}
