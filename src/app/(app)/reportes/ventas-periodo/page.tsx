@@ -1,6 +1,8 @@
 import { requireProfile } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { redirect } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { VentasPeriodoClient } from "@/components/reportes/ventas-periodo-client";
 
 export default async function VentasPeriodoPage() {
@@ -12,9 +14,17 @@ export default async function VentasPeriodoPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ventas por Período</h1>
-        <p className="text-sm text-slate-600">Visualiza el rendimiento de tus ventas en el tiempo.</p>
+      <div className="flex items-center gap-4">
+        <Link 
+          href="/reportes" 
+          className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-indigo-600 transition-colors shrink-0"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">Ventas por Período</h1>
+          <p className="text-sm text-slate-600">Analiza tus ingresos a lo largo del tiempo.</p>
+        </div>
       </div>
 
       <VentasPeriodoClient />
