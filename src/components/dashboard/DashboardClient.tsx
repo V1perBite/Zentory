@@ -192,7 +192,7 @@ export default function DashboardClient() {
                 <XAxis dataKey="time" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
                 <Tooltip 
-                  formatter={(value: number) => [formatCurrency(value), "Ventas"]}
+                  formatter={(value: any) => [formatCurrency(Number(value) || 0), "Ventas"]}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                 />
                 <Line type="monotone" dataKey="ventas" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} activeDot={{ r: 6 }} />
@@ -209,7 +209,7 @@ export default function DashboardClient() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
-                <Tooltip formatter={(value: number) => [formatCurrency(value), ""]} cursor={{ fill: 'transparent' }} />
+                <Tooltip formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]} cursor={{ fill: 'transparent' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                 <Bar dataKey="ventas" name="Ventas" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
                 <Bar dataKey="costos" name="Costos" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={40} />
@@ -314,7 +314,7 @@ export default function DashboardClient() {
               <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
               <div>
                 <p className="text-sm font-semibold text-rose-800">Inventario Crítico</p>
-                <p className="text-xs text-rose-600 mt-0.5">3 productos están por debajo del stock mínimo. Recomendamos reabastecer "Laptop Pro 15\"".</p>
+                <p className="text-xs text-rose-600 mt-0.5">3 productos están por debajo del stock mínimo. Recomendamos reabastecer &quot;Laptop Pro 15&quot;&quot;.</p>
               </div>
             </div>
             
