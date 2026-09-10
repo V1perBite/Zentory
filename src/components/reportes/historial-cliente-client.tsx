@@ -9,7 +9,7 @@ import { History, Search } from "lucide-react";
 type Cliente = {
   id: string;
   nombre: string;
-  numero_documento: string;
+  identificacion: string;
 };
 
 type FacturaHistorial = {
@@ -41,7 +41,7 @@ export function HistorialClienteClient() {
       setLoadingClientes(true);
       const { data, error } = await supabase
         .from("clientes")
-        .select("id, nombre, numero_documento")
+        .select("id, nombre, identificacion")
         .order("nombre");
 
       if (!error && data) {
@@ -120,7 +120,7 @@ export function HistorialClienteClient() {
               ) : (
                 clientes.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.nombre} {c.numero_documento ? `(${c.numero_documento})` : ""}
+                    {c.nombre} {c.identificacion ? `(${c.identificacion})` : ""}
                   </option>
                 ))
               )}

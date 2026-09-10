@@ -9,7 +9,7 @@ import { Star } from "lucide-react";
 type ClienteRendimiento = {
   id: string;
   nombre: string;
-  documento: string;
+  identificacion: string;
   facturas: number;
   totalComprado: number;
 };
@@ -33,7 +33,7 @@ export function MejoresClientesClient() {
         .from("facturas")
         .select(`
           total,
-          cliente:clientes(id, nombre, numero_documento)
+          cliente:clientes(id, nombre, identificacion)
         `)
         .eq("estado", "impresa")
         .gte("created_at", start)
@@ -53,7 +53,7 @@ export function MejoresClientesClient() {
           const prev = map.get(id) || { 
             id, 
             nombre: cli.nombre, 
-            documento: cli.numero_documento, 
+            identificacion: cli.identificacion, 
             facturas: 0, 
             totalComprado: 0 
           };
@@ -131,7 +131,7 @@ export function MejoresClientesClient() {
                   <tr key={item.id} className="hover:bg-slate-50/50">
                     <td className="px-4 py-3 text-slate-400 font-medium">{idx + 1}</td>
                     <td className="px-4 py-3 font-medium text-slate-700">{item.nombre}</td>
-                    <td className="px-4 py-3 text-slate-500">{item.documento}</td>
+                    <td className="px-4 py-3 text-slate-500">{item.identificacion}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{item.facturas}</td>
                     <td className="px-4 py-3 text-right font-bold text-slate-900">{formatCOP(item.totalComprado)}</td>
                   </tr>
