@@ -6,6 +6,7 @@ import { ROLES } from "@/lib/constants";
 
 export async function anularFactura(
   facturaId: string,
+  razon?: string,
 ): Promise<{ error?: string }> {
   const profile = await requireProfile();
   if (profile.rol !== ROLES.ADMIN) return { error: "Sin permisos." };
@@ -13,6 +14,7 @@ export async function anularFactura(
   const supabase = createClient();
   const { error } = await supabase.rpc("anular_factura", {
     p_factura_id: facturaId,
+    p_razon: razon || null,
   });
 
   if (error) return { error: error.message };

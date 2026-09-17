@@ -33,7 +33,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
   let query = supabase
     .from("facturas")
     .select(
-      "id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id,cliente:clientes(nombre),vendedor:usuarios(nombre),items:items_factura(cantidad,precio_unitario,descuento_item,subtotal_item,producto:productos(nombre))",
+      "id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id,razon_anulacion,cliente:clientes(nombre),vendedor:usuarios(nombre),items:items_factura(cantidad,precio_unitario,descuento_item,subtotal_item,producto:productos(nombre))",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -84,6 +84,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
       cliente: clienteNombre,
       vendedor: vendedorNombre,
       items,
+      razon_anulacion: f.razon_anulacion ?? null,
     };
   });
 

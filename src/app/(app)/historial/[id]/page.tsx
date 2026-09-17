@@ -18,7 +18,7 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
   const { data } = await supabase
     .from("facturas")
     .select(
-      "id,numero_factura,cliente_id,vendedor_id,subtotal,descuento_total,total,estado,created_at,cliente:clientes(id,nombre,identificacion,telefono,direccion),vendedor:usuarios(id,nombre),items:items_factura(id,factura_id,producto_id,cantidad,precio_unitario,descuento_item,tipo_descuento_item,subtotal_item,producto:productos(nombre,sku_code))",
+      "id,numero_factura,cliente_id,vendedor_id,subtotal,descuento_total,total,estado,created_at,razon_anulacion,cliente:clientes(id,nombre,identificacion,telefono,direccion),vendedor:usuarios(id,nombre),items:items_factura(id,factura_id,producto_id,cantidad,precio_unitario,descuento_item,tipo_descuento_item,subtotal_item,producto:productos(nombre,sku_code))",
     )
     .eq("id", params.id)
     .single();

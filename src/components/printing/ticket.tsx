@@ -38,6 +38,12 @@ export function Ticket({ factura, negocio, printMode = false }: TicketProps) {
         <p>
           Cliente: {factura.cliente.nombre} · {factura.cliente.identificacion}
         </p>
+        {factura.estado === "anulada" ? (
+          <p className="mt-1 font-bold text-red-600">ANULADA</p>
+        ) : null}
+        {factura.estado === "anulada" && factura.razon_anulacion ? (
+          <p className="mt-0.5 text-red-600">Motivo: {factura.razon_anulacion}</p>
+        ) : null}
       </section>
 
       <section className="border-b border-dashed border-black py-2">
