@@ -94,11 +94,8 @@ CREATE POLICY facturas_update_only_admin_print ON public.facturas
 
 
 -- ── 4. RPC anular_factura ─────────────────────────────────────
--- Primero revocamos los permisos abiertos (las funciones nacen con
--- EXECUTE FOR PUBLIC, lo que exponía la firma a anon).
-REVOKE ALL ON FUNCTION public.anular_factura(uuid, text)
-  FROM PUBLIC, anon;
-
+-- DROP primero; esto elimina también todos los ACLs existentes.
+-- El REVOKE + GRANT al final del bloque es lo único necesario.
 DROP FUNCTION IF EXISTS public.anular_factura(uuid, text);
 
 CREATE OR REPLACE FUNCTION public.anular_factura(
