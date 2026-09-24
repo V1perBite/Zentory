@@ -105,6 +105,7 @@ export function HistorialClient({ facturas, isAdmin }: HistorialClientProps) {
                   <Calendar className="h-3.5 w-3.5" />
                   <span>
                     {new Date(f.created_at).toLocaleString("es-CO", {
+                      timeZone: "America/Bogota",
                       day: "2-digit",
                       month: "2-digit",
                       year: "2-digit",
@@ -203,6 +204,7 @@ export function HistorialClient({ facturas, isAdmin }: HistorialClientProps) {
                 <td className="px-4 py-3 font-bold text-slate-900">{f.numero_factura}</td>
                 <td className="px-4 py-3 font-medium text-slate-500 whitespace-nowrap">
                   {new Date(f.created_at).toLocaleString("es-CO", {
+                    timeZone: "America/Bogota",
                     day: "2-digit",
                     month: "2-digit",
                     year: "2-digit",
@@ -316,8 +318,24 @@ export function HistorialClient({ facturas, isAdmin }: HistorialClientProps) {
                 onChange={(e) => setRazon(e.target.value)}
                 placeholder="Ej: Devolución por producto dañado..."
                 rows={3}
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-rose-500 focus:outline-none focus:ring-1 focus:ring-rose-500"
+                className={`w-full rounded-lg border px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 ${
+                  razon.length > 0 && razon.trim().length < 10
+                    ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500"
+                    : "border-slate-300 focus:border-rose-500 focus:ring-rose-500"
+                }`}
               />
+              <div className="mt-1 flex items-center justify-between">
+                {razon.length > 0 && razon.trim().length < 10 ? (
+                  <p className="text-xs text-rose-600">
+                    Mínimo 10 caracteres ({razon.trim().length}/10)
+                  </p>
+                ) : (
+                  <span />
+                )}
+                <p className={`text-xs ml-auto ${razon.trim().length >= 10 ? "text-emerald-600" : "text-slate-400"}`}>
+                  {razon.trim().length} caracteres
+                </p>
+              </div>
             </div>
 
             <div className="rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">
@@ -336,7 +354,7 @@ export function HistorialClient({ facturas, isAdmin }: HistorialClientProps) {
               </button>
               <button
                 type="button"
-                disabled={loading || !razon.trim()}
+                disabled={loading || razon.trim().length < 10}
                 onClick={handleAnular}
                 className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60 hover:bg-rose-700"
               >

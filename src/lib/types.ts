@@ -62,6 +62,8 @@ export type Factura = {
   estado: "pendiente_impresion" | "impresa" | "anulada";
   created_at: string;
   razon_anulacion?: string | null;
+  fecha_anulacion?: string | null;
+  usuario_anulacion_id?: string | null;
 };
 
 export type FacturaConDetalle = Factura & {

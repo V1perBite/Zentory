@@ -34,7 +34,17 @@ export function Ticket({ factura, negocio, printMode = false }: TicketProps) {
 
       <section className="border-b border-dashed border-black py-2">
         <p className="text-[13px] font-bold">Factura: #{factura.numero_factura}</p>
-        <p>Fecha: {new Date(factura.created_at).toLocaleString()}</p>
+        <p>
+          Fecha:{" "}
+          {new Date(factura.created_at).toLocaleString("es-CO", {
+            timeZone: "America/Bogota",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}
+        </p>
         <p>
           Cliente: {factura.cliente.nombre} · {factura.cliente.identificacion}
         </p>

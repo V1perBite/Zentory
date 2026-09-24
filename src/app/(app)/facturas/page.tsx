@@ -37,6 +37,15 @@ export default async function FacturasPage() {
         </Link>
 
         <Link
+          href="/facturas/anuladas"
+          className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-rose-300 hover:shadow-md"
+        >
+          <span className="text-3xl">🚫</span>
+          <span className="font-semibold text-slate-800">Anulaciones</span>
+          <span className="text-xs text-slate-500">Registro completo de facturas anuladas con motivo y auditoría.</span>
+        </Link>
+
+        <Link
           href="/imprimir"
           className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-amber-300 hover:shadow-md"
         >
