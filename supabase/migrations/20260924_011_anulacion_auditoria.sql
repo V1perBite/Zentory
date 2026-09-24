@@ -73,24 +73,24 @@ CREATE TRIGGER trg_bloquear_modificacion_anulada
   EXECUTE FUNCTION public.bloquear_modificacion_anulada();
 
 
--- ── 3. RLS: solo admin puede leer facturas anuladas ──────────
-DROP POLICY IF EXISTS facturas_select_role ON public.facturas;
-CREATE POLICY facturas_select_role ON public.facturas
-  FOR SELECT USING (
-    public.is_admin()
-    OR (vendedor_id = auth.uid() AND estado <> 'anulada')
-  );
-
--- La política de UPDATE existente ya limita los campos; el trigger
--- agrega la protección de integridad sobre el estado.
--- Actualizamos el WITH CHECK para permitir 'anulada' como estado
--- resultante (el RPC SECURITY DEFINER lo escribe directamente,
--- pero la política se evalúa de todas formas en algunas versiones).
+-- ── 3. RLS ───────────────────────────────────────────────────
+-- La política SELECT original (is_admin OR vendedor_id = auth.uid())
+-- se mantiene sin cambios: los vendedores ya no pueden acceder a
+-- /historial porque el servidor los redirige a /facturas/nueva.
+-- No es necesario restringir a nivel de base de datos aquí.
+--
+-- La política UPDATE se actualiza solo para incluir 'anulada' en el
+-- WITH CHECK, de modo que el RPC anular_factura (SECURITY DEFINER)
+-- pueda escribir ese estado sin ser bloqueado en ninguna variante
+-- de Supabase que evalúe WITH CHECK incluso en funciones SECURITY DEFINER.
 DROP POLICY IF EXISTS facturas_update_only_admin_print ON public.facturas;
 CREATE POLICY facturas_update_only_admin_print ON public.facturas
   FOR UPDATE
   USING (public.is_admin())
-  WITH CHECK (public.is_admin());
+  WITH CHECK (
+    public.is_admin()
+    AND estado IN ('pendiente_impresion', 'impresa', 'anulada')
+  );
 
 
 -- ── 4. RPC anular_factura ─────────────────────────────────────
