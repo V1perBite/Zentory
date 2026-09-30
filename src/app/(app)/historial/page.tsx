@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ROLES } from "@/lib/constants";
@@ -17,10 +16,6 @@ type HistorialPageProps = {
 export default async function HistorialPage({ searchParams }: HistorialPageProps) {
   const profile = await requireProfile();
 
-  if (profile.rol !== ROLES.ADMIN) {
-    redirect("/facturas/nueva");
-  }
-
   const isAdmin = profile.rol === ROLES.ADMIN;
 
   const supabase = createClient();
@@ -33,7 +28,7 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
   let query = supabase
     .from("facturas")
     .select(
-      "id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id,razon_anulacion,cliente:clientes(nombre),vendedor:usuarios(nombre),items:items_factura(cantidad,precio_unitario,descuento_item,subtotal_item,producto:productos(nombre))",
+      "id,numero_factura,subtotal,descuento_total,total,estado,created_at,vendedor_id,razon_anulacion,cliente:clientes(nombre),vendedor:usuarios!facturas_vendedor_id_fkey(nombre),items:items_factura(cantidad,precio_unitario,descuento_item,subtotal_item,producto:productos(nombre))",
     )
     .order("created_at", { ascending: false })
     .limit(200);
@@ -48,12 +43,19 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
     query = query.eq("vendedor_id", profile.id);
   }
 
-  const [{ data: facturasRaw }, { data: vendedores }] = await Promise.all([
-    query,
-    isAdmin
-      ? supabase.from("usuarios").select("id,nombre").eq("activo", true).order("nombre")
-      : Promise.resolve({ data: [] as Array<{ id: string; nombre: string }> }),
-  ]);
+  const [{ data: facturasRaw, error: facturasError }, { data: vendedores, error: vendedoresError }] =
+    await Promise.all([
+      query,
+      isAdmin
+        ? supabase.from("usuarios").select("id,nombre").eq("activo", true).order("nombre")
+        : Promise.resolve({ data: [] as Array<{ id: string; nombre: string }>, error: null }),
+    ]);
+
+  const queryError = facturasError ?? vendedoresError ?? null;
+
+  if (queryError) {
+    throw new Error(`No se pudo cargar el historial de facturas: ${queryError.message}`);
+  }
 
   const facturas = (facturasRaw ?? []).map((f) => {
     // eslint-disable-next-line

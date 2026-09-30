@@ -1,0 +1,188 @@
+{
+  "creado_en": "2026-09-30T06:45:13.178Z",
+  "marca": "[PRUEBA]",
+  "clientes": [
+    {
+      "id": "4af6b526-788e-4777-b07d-459d26bdf47e",
+      "nombre": "[PRUEBA] Cliente Andes",
+      "identificacion": "PRUEBA-CLI-001"
+    },
+    {
+      "id": "720767f9-66e3-4687-84d8-d9e6cec7e80a",
+      "nombre": "[PRUEBA] Cliente Centro",
+      "identificacion": "PRUEBA-CLI-002"
+    },
+    {
+      "id": "cb0fcc24-4f04-45f8-93e2-6562a76dbbe9",
+      "nombre": "[PRUEBA] Cliente Norte",
+      "identificacion": "PRUEBA-CLI-003"
+    }
+  ],
+  "productos": [
+    {
+      "id": "47fdaba2-0c8e-4636-8282-8f8e43830218",
+      "nombre": "[PRUEBA] Café premium 500g",
+      "sku_code": "PRUEBA-001"
+    },
+    {
+      "id": "04a2e77d-cfca-4ccf-9ab1-2bb8506d0968",
+      "nombre": "[PRUEBA] Arroz integral 1kg",
+      "sku_code": "PRUEBA-002"
+    },
+    {
+      "id": "e33cfc6d-f23b-47d6-b6bb-fd9179edaa5a",
+      "nombre": "[PRUEBA] Aceite vegetal 1L",
+      "sku_code": "PRUEBA-003"
+    },
+    {
+      "id": "0c2164df-5c96-44a1-bf38-162f5c857f60",
+      "nombre": "[PRUEBA] Panela orgánica 500g",
+      "sku_code": "PRUEBA-004"
+    },
+    {
+      "id": "042be03c-f6f7-4dbd-a1ce-bff276f1dfb9",
+      "nombre": "[PRUEBA] Miel de abeja 350ml",
+      "sku_code": "PRUEBA-005"
+    },
+    {
+      "id": "b37f5f8c-6586-4dfc-80bc-023f9bff6d65",
+      "nombre": "[PRUEBA] Harina de trigo 1kg",
+      "sku_code": "PRUEBA-006"
+    },
+    {
+      "id": "36182086-eb82-42ab-8df5-239ad3fdc6b9",
+      "nombre": "[PRUEBA] Chocolate artesanal",
+      "sku_code": "PRUEBA-007"
+    },
+    {
+      "id": "22802e78-7a0e-4e7c-95cb-0f6191f2ba01",
+      "nombre": "[PRUEBA] Té verde 20 bolsas",
+      "sku_code": "PRUEBA-008"
+    },
+    {
+      "id": "4fe55e85-d245-46e4-b0c1-c4f199d7a002",
+      "nombre": "[PRUEBA] Frutos secos 200g",
+      "sku_code": "PRUEBA-009"
+    },
+    {
+      "id": "e586a40c-de68-4157-9891-fc86625d0d93",
+      "nombre": "[PRUEBA] Yogur natural 1L",
+      "sku_code": "PRUEBA-010"
+    }
+  ],
+  "facturas": [
+    {
+      "id": "01d6d088-ad76-4a89-adef-afdf7c2839bf",
+      "numero_factura": 29,
+      "estado": "impresa",
+      "created_at": "2026-09-30T05:40:00.000Z",
+      "vendedor": "David",
+      "items": 3
+    },
+    {
+      "id": "21ce01fe-0a31-4609-aa73-e1aa03251e3e",
+      "numero_factura": 30,
+      "estado": "impresa",
+      "created_at": "2026-09-30T06:05:00.000Z",
+      "vendedor": "jhorman",
+      "items": 2
+    },
+    {
+      "id": "c02b8681-f254-4ca1-b993-62c28977d95a",
+      "numero_factura": 31,
+      "estado": "impresa",
+      "created_at": "2026-09-29T19:30:00.000Z",
+      "vendedor": "Geral",
+      "items": 3
+    },
+    {
+      "id": "b05042bd-1d75-475c-bb97-57fa8f772a04",
+      "numero_factura": 32,
+      "estado": "pendiente_impresion",
+      "created_at": "2026-09-27T16:15:00.000Z",
+      "vendedor": "Andres",
+      "items": 2
+    },
+    {
+      "id": "a1fab7d4-6e85-4caf-ada3-94c8c0403129",
+      "numero_factura": 33,
+      "estado": "impresa",
+      "created_at": "2026-09-25T21:40:00.000Z",
+      "vendedor": "davidromerogocel",
+      "items": 2
+    },
+    {
+      "id": "f633d754-ce40-4169-984f-e2fbb3417687",
+      "numero_factura": 34,
+      "estado": "impresa",
+      "created_at": "2026-09-22T15:05:00.000Z",
+      "vendedor": "David",
+      "items": 2
+    },
+    {
+      "id": "932fc1fc-f070-493c-b386-e6f23824e574",
+      "numero_factura": 35,
+      "estado": "impresa",
+      "created_at": "2026-09-18T22:25:00.000Z",
+      "vendedor": "jhorman",
+      "items": 3
+    },
+    {
+      "id": "e0a349e5-2645-4ee4-9185-e20ec7a5972d",
+      "numero_factura": 36,
+      "estado": "impresa",
+      "created_at": "2026-09-15T17:50:00.000Z",
+      "vendedor": "Geral",
+      "items": 2
+    },
+    {
+      "id": "95b3e159-4b88-4b04-9cbf-72bcd412c2c9",
+      "numero_factura": 37,
+      "estado": "impresa",
+      "created_at": "2026-09-12T20:35:00.000Z",
+      "vendedor": "Andres",
+      "items": 2
+    },
+    {
+      "id": "c8d35adb-c468-4380-b6b5-5634726c6d95",
+      "numero_factura": 38,
+      "estado": "impresa",
+      "created_at": "2026-09-08T14:45:00.000Z",
+      "vendedor": "davidromerogocel",
+      "items": 2
+    },
+    {
+      "id": "6850c6e3-944e-41ec-a3d7-1c300e04b38b",
+      "numero_factura": 39,
+      "estado": "anulada",
+      "created_at": "2026-09-03T23:10:00.000Z",
+      "vendedor": "David",
+      "items": 2
+    },
+    {
+      "id": "70b16e6f-a7df-4af6-b5e1-07cb5a8acb5d",
+      "numero_factura": 40,
+      "estado": "impresa",
+      "created_at": "2026-08-31T18:20:00.000Z",
+      "vendedor": "jhorman",
+      "items": 2
+    }
+  ],
+  "movimientos": [
+    {
+      "id": "f84fe06c-ce35-4dfe-aba4-6d23d6f743b4",
+      "motivo": "[PRUEBA] Merma por daño en bodega",
+      "created_at": "2026-09-14T15:30:00+00:00"
+    },
+    {
+      "id": "da1b2d48-abcd-4463-b27b-74ee21a59d39",
+      "motivo": "[PRUEBA] Merma por vencimiento",
+      "created_at": "2026-09-20T20:10:00+00:00"
+    },
+    {
+      "id": "da731d49-c615-4fe7-a582-7b873b19d15f",
+      "motivo": "[PRUEBA] Merma por rotura en transporte",
+      "created_at": "2026-09-28T14:20:00+00:00"
+    }
+  ]
+}

@@ -22,6 +22,29 @@ function CssBar({ value, max, color }: { value: number; max: number; color: stri
   );
 }
 
+const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function fmtLocal(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function diaLocal(fecha: string, hora: number, min: number, seg: number, ms: number): string {
+  const base = FECHA_RE.test(fecha) ? fecha.split("-").map(Number) : null;
+  const [y, mo, d] = base
+    ? base
+    : (() => {
+        const t = new Date();
+        return [t.getFullYear(), t.getMonth() + 1, t.getDate()];
+      })();
+  return new Date(y, mo - 1, d, hora, min, seg, ms).toISOString();
+}
+
+const inicioDia = (fecha: string) => diaLocal(fecha, 0, 0, 0, 0);
+const finDia = (fecha: string) => diaLocal(fecha, 23, 59, 59, 999);
+
 export default async function ReportesPage({ searchParams }: ReportesPageProps) {
   const profile = await requireProfile();
   if (profile.rol !== ROLES.ADMIN) redirect("/dashboard");
@@ -32,8 +55,8 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   const hoy = new Date();
   const hace30 = new Date(hoy);
   hace30.setDate(hoy.getDate() - 30);
-  const defaultDesde = hace30.toISOString().split("T")[0];
-  const defaultHasta = hoy.toISOString().split("T")[0];
+  const defaultDesde = fmtLocal(hace30);
+  const defaultHasta = fmtLocal(hoy);
 
   const desde = searchParams?.desde ?? defaultDesde;
   const hasta = searchParams?.hasta ?? defaultHasta;
@@ -59,15 +82,15 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
         "created_at,total,items_factura(cantidad,precio_unitario,producto:productos(precio_costo))",
       )
       .neq("estado", "anulada")
-      .gte("created_at", `${desde}T00:00:00`)
-      .lte("created_at", `${hasta}T23:59:59`)
+      .gte("created_at", inicioDia(desde))
+      .lte("created_at", finDia(hasta))
       .order("created_at");
 
     if (error) errorReporte = error.message;
 
     const map = new Map<string, { total: number; costo: number }>();
     for (const f of data ?? []) {
-      const fecha = f.created_at.split("T")[0];
+      const fecha = fmtLocal(new Date(f.created_at));
       const prev = map.get(fecha) ?? { total: 0, costo: 0 };
       const costoFactura = (f.items_factura ?? []).reduce((acc: number, fi: {
         cantidad: number;
@@ -101,8 +124,8 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
         "cantidad,subtotal_item,producto:productos(nombre),factura:facturas!inner(estado,created_at)",
       )
       .neq("factura.estado", "anulada")
-      .gte("factura.created_at", `${desde}T00:00:00`)
-      .lte("factura.created_at", `${hasta}T23:59:59`);
+      .gte("factura.created_at", inicioDia(desde))
+      .lte("factura.created_at", finDia(hasta));
 
     if (error) errorReporte = error.message;
 
@@ -130,11 +153,13 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   let totalValorInventario = 0;
 
   if (tab === "inventario") {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("productos")
       .select("nombre,sku_code,stock_actual,precio_costo")
       .eq("activo", true)
       .order("nombre");
+
+    if (error) errorReporte = error.message;
 
     inventario = (data ?? []).map((p) => ({
       nombre: p.nombre,
@@ -153,10 +178,10 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   if (tab === "vendedores") {
     const { data, error } = await supabase
       .from("facturas")
-      .select("total,vendedor:usuarios(nombre)")
+      .select("total,vendedor:usuarios!facturas_vendedor_id_fkey(nombre)")
       .neq("estado", "anulada")
-      .gte("created_at", `${desde}T00:00:00`)
-      .lte("created_at", `${hasta}T23:59:59`);
+      .gte("created_at", inicioDia(desde))
+      .lte("created_at", finDia(hasta));
 
     if (error) errorReporte = error.message;
 

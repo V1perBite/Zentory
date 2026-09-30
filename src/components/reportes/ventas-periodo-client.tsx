@@ -87,7 +87,9 @@ export function VentasPeriodoClient() {
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold">Resumen de Ventas</h2>
-          <p className="text-3xl font-bold text-indigo-600 mt-2">{formatCOP(totalVentas)}</p>
+          <p className="text-3xl font-bold text-indigo-600 mt-2">
+            {loading ? "—" : formatCOP(totalVentas)}
+          </p>
           <p className="text-xs text-slate-500">Total en el período seleccionado</p>
         </div>
 

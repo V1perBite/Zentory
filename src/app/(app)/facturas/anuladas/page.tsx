@@ -56,9 +56,27 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
     .eq("estado", "anulada")
     .order("fecha_anulacion", { ascending: false, nullsFirst: false });
 
-  // Filtrar por rango de fecha de anulación
-  if (desde) query = query.gte("fecha_anulacion", `${desde}T00:00:00`);
-  if (hasta) query = query.lte("fecha_anulacion", `${hasta}T23:59:59`);
+  // Filtrar por rango de fecha de anulación. Si la factura no tiene
+  // fecha_anulacion (registros anteriores a la auditoría), el rango se
+  // aplica sobre created_at para que nunca desaparezca de los resultados.
+  const esFecha = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const desdeIso = desde && esFecha(desde) ? `${desde}T00:00:00` : null;
+  const hastaIso = hasta && esFecha(hasta) ? `${hasta}T23:59:59` : null;
+
+  if (desdeIso && hastaIso) {
+    query = query.or(
+      `and(fecha_anulacion.gte."${desdeIso}",fecha_anulacion.lte."${hastaIso}"),and(fecha_anulacion.is.null,created_at.gte."${desdeIso}",created_at.lte."${hastaIso}")`,
+    );
+  } else if (desdeIso) {
+    query = query.or(
+      `fecha_anulacion.gte."${desdeIso}",and(fecha_anulacion.is.null,created_at.gte."${desdeIso}")`,
+    );
+  } else if (hastaIso) {
+    query = query.or(
+      `fecha_anulacion.lte."${hastaIso}",and(fecha_anulacion.is.null,created_at.lte."${hastaIso}")`,
+    );
+  }
+
   if (numero && /^\d+$/.test(numero))
     query = query.eq("numero_factura", Number(numero));
 

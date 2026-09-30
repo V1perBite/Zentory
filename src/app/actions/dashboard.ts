@@ -1,6 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { requireProfile } from "@/lib/auth";
+import { ROLES } from "@/lib/constants";
 import { startOfDay, startOfWeek, startOfMonth, subDays, subMonths, endOfDay, subWeeks } from "date-fns";
 
 export type DateRangeKey = "hoy" | "ultimos_7_dias" | "ultimos_30_dias" | "este_mes" | "mes_anterior";
@@ -50,6 +52,11 @@ function getDateRange(range: DateRangeKey) {
 }
 
 export async function getDashboardStats(rangeKey: DateRangeKey) {
+  const profile = await requireProfile();
+  if (profile.rol !== ROLES.ADMIN) {
+    throw new Error("No autorizado");
+  }
+
   const supabase = createClient();
   const { start, end, prevStart, prevEnd } = getDateRange(rangeKey);
 
@@ -157,20 +164,16 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
   });
   const chartData = Object.keys(chartDataMap).map(k => ({ time: k, ventas: chartDataMap[k] }));
 
-  // Productos con bajo stock (Alertas)
-  const { count: lowStockCount } = await supabase
+  // Productos con bajo stock (Alertas) — misma definición que
+  // /reportes/bajo-stock: stock_actual <= minimo_stock
+  const { data: productosActivos } = await supabase
     .from("productos")
-    .select("*", { count: "exact", head: true })
-    .eq("activo", true)
-    .lte("stock_actual", 5); // Simplificación: puedes comparar stock_actual <= minimo_stock si lo traes, o traer los q cumplen eso.
+    .select("nombre, stock_actual, minimo_stock")
+    .eq("activo", true);
 
-  // Fetch full list for alert
-  const { data: lowStockProds } = await supabase
-    .from("productos")
-    .select("nombre")
-    .eq("activo", true)
-    .lte("stock_actual", 5) // idealmente usar rpc o traer todo si es poco, pero por ahora limit 3
-    .limit(3);
+  const bajosStock = (productosActivos ?? []).filter(
+    (p) => p.stock_actual <= p.minimo_stock,
+  );
 
   return {
     metrics: { ventas, ganancia, facturas: numFacturas, prevVentas, prevGanancia },
@@ -178,8 +181,8 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     topProductos,
     estadosCount,
     alertas: {
-      lowStockCount: lowStockCount || 0,
-      lowStockNames: lowStockProds ? lowStockProds.map(p => p.nombre).join(", ") : ""
+      lowStockCount: bajosStock.length,
+      lowStockNames: bajosStock.slice(0, 3).map((p) => p.nombre).join(", ")
     }
   };
 }

@@ -38,7 +38,7 @@ export function CorteCajaClient() {
           numero_factura, 
           total, 
           created_at,
-          vendedor:usuarios(nombre)
+          vendedor:usuarios!facturas_vendedor_id_fkey(nombre)
         `)
         .neq("estado", "anulada")
         .gte("created_at", start)
@@ -95,7 +95,9 @@ export function CorteCajaClient() {
             </div>
             <span className="text-sm font-medium">Total Ingresos</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-auto">{formatCOP(totalVentas)}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-auto">
+            {loading ? "—" : formatCOP(totalVentas)}
+          </p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
@@ -105,7 +107,7 @@ export function CorteCajaClient() {
             </div>
             <span className="text-sm font-medium">Facturas Emitidas</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-auto">{numFacturas}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-auto">{loading ? "—" : numFacturas}</p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
@@ -115,7 +117,9 @@ export function CorteCajaClient() {
             </div>
             <span className="text-sm font-medium">Ticket Promedio</span>
           </div>
-          <p className="text-2xl font-bold text-slate-900 mt-auto">{formatCOP(ticketPromedio)}</p>
+          <p className="text-2xl font-bold text-slate-900 mt-auto">
+            {loading ? "—" : formatCOP(ticketPromedio)}
+          </p>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col">
@@ -125,8 +129,12 @@ export function CorteCajaClient() {
             </div>
             <span className="text-sm font-medium">Mejor Vendedor</span>
           </div>
-          <p className="text-lg font-bold text-slate-900 mt-auto line-clamp-1">{mejorVendedor ? mejorVendedor[0] : "-"}</p>
-          <p className="text-xs text-slate-500">{mejorVendedor ? formatCOP(mejorVendedor[1]) : ""}</p>
+          <p className="text-lg font-bold text-slate-900 mt-auto line-clamp-1">
+            {loading ? "—" : mejorVendedor ? mejorVendedor[0] : "-"}
+          </p>
+          <p className="text-xs text-slate-500">
+            {loading || !mejorVendedor ? "" : formatCOP(mejorVendedor[1])}
+          </p>
         </div>
       </div>
 

@@ -44,7 +44,7 @@ export function MermasClient() {
           motivo,
           costo_unitario,
           created_at,
-          producto:productos(nombre)
+          producto:productos(nombre, precio_costo)
         `)
         .is("factura_id", null)
         .in("tipo", ["salida", "ajuste"])
@@ -58,16 +58,20 @@ export function MermasClient() {
         setData([]);
       } else {
         setErrorMsg(null);
-        const result = (movimientos ?? []).map((m: any) => ({
-          id: m.id,
-          producto_id: m.producto_id,
-          nombre_producto: Array.isArray(m.producto) ? m.producto[0]?.nombre : m.producto?.nombre,
-          cantidad: Math.abs(m.cantidad),
-          motivo: m.motivo,
-          costo_unitario: m.costo_unitario || 0,
-          created_at: m.created_at,
-          perdida_total: Math.abs(m.cantidad) * (m.costo_unitario || 0)
-        }));
+        const result = (movimientos ?? []).map((m: any) => {
+          const prod = Array.isArray(m.producto) ? m.producto[0] : m.producto;
+          const costoUnitario = Number(m.costo_unitario ?? prod?.precio_costo ?? 0);
+          return {
+            id: m.id,
+            producto_id: m.producto_id,
+            nombre_producto: prod?.nombre,
+            cantidad: Math.abs(m.cantidad),
+            motivo: m.motivo,
+            costo_unitario: costoUnitario,
+            created_at: m.created_at,
+            perdida_total: Math.abs(m.cantidad) * costoUnitario,
+          };
+        });
         
         setData(result);
       }
@@ -109,7 +113,9 @@ export function MermasClient() {
 
       <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 max-w-sm">
         <p className="text-xs text-rose-700">Total en Pérdidas (Costo)</p>
-        <p className="mt-1 text-2xl font-bold text-rose-800">{formatCOP(totalPerdidas)}</p>
+        <p className="mt-1 text-2xl font-bold text-rose-800">
+          {loading ? "—" : formatCOP(totalPerdidas)}
+        </p>
       </div>
 
       <div className="w-full">

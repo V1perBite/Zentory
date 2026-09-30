@@ -45,7 +45,7 @@ export function VentasVendedorClient() {
         .from("facturas")
         .select(`
           total,
-          vendedor:usuarios(nombre)
+          vendedor:usuarios!facturas_vendedor_id_fkey(nombre)
         `)
         .neq("estado", "anulada")
         .gte("created_at", start)
@@ -156,6 +156,10 @@ export function VentasVendedorClient() {
              <div className="flex h-[300px] items-center justify-center">
                <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />
              </div>
+          ) : sortedData.length === 0 ? (
+            <div className="flex h-[200px] items-center justify-center text-slate-500 text-sm">
+              No hay ventas registradas en este período.
+            </div>
           ) : (
             <table className="min-w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-500">

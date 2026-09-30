@@ -46,9 +46,14 @@ export function HistorialClienteClient() {
         .select("id, nombre, identificacion")
         .order("nombre");
 
-      if (!error && data) {
-        setClientes(data);
-        if (data.length > 0) {
+      if (error) {
+        console.error("Error fetching clientes:", error);
+        setErrorMsg(error.message);
+        setClientes([]);
+      } else {
+        setErrorMsg(null);
+        setClientes(data ?? []);
+        if (data && data.length > 0) {
           setClienteSeleccionado(data[0].id);
         }
       }

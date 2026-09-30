@@ -35,6 +35,7 @@ export function AppShell({ profile, children }: AppShellProps) {
 
   const vendedorLinks = [
     { href: "/facturas", label: "Facturas", icon: FileText },
+    { href: "/historial", label: "Historial", icon: History },
     { href: "/inventario", label: "Inventario", icon: Package },
   ];
 

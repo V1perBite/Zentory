@@ -861,13 +861,19 @@ create policy facturas_update_only_admin_print on public.facturas
   );
 
 -- ── items_factura ───────────────────────────────────────────
+-- Misma protección que facturas: usuario activo y, para no-admin,
+-- sólo las facturas propias que no estén anuladas.
 drop policy if exists items_factura_select_role on public.items_factura;
 create policy items_factura_select_role on public.items_factura
   for select using (
     exists (
       select 1 from public.facturas f
       where f.id = items_factura.factura_id
-        and (public.is_admin() or f.vendedor_id = auth.uid())
+        and public.is_active_user()
+        and (
+             public.is_admin()
+             or (f.vendedor_id = auth.uid() and f.estado <> 'anulada')
+           )
     )
   );
 

@@ -29,8 +29,7 @@ export function BajoStockClient() {
       const { data: productos, error } = await supabase
         .from("productos")
         .select("id, nombre, sku_code, stock_actual, minimo_stock, precio_costo")
-        .eq("activo", true)
-        .lte("stock_actual", 1000000); // we will filter in JS since we need to compare columns, wait, Supabase might not easily compare two columns without raw SQL or a view. So we fetch all and filter in JS.
+        .eq("activo", true);
 
       if (error) {
         console.error("Error fetching data:", error);
@@ -112,7 +111,9 @@ export function BajoStockClient() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right text-slate-600">{item.minimo_stock}</td>
-                      <td className="px-4 py-3 text-right font-medium text-amber-600">-{deficit}</td>
+                      <td className="px-4 py-3 text-right font-medium text-amber-600">
+                    {deficit > 0 ? `-${deficit}` : 0}
+                  </td>
                       <td className="px-4 py-3 text-right text-slate-600">{formatCOP(inversion)}</td>
                     </tr>
                   );
