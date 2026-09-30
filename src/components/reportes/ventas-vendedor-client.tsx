@@ -14,6 +14,7 @@ import {
   ResponsiveContainer,
   Cell
 } from "recharts";
+import { ReporteError } from "./reporte-error";
 
 type VendedorRendimiento = {
   nombre: string;
@@ -28,6 +29,7 @@ export function VentasVendedorClient() {
   const supabase = createClient();
   const [data, setData] = useState<VendedorRendimiento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
   const [fechaFin, setFechaFin] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -45,13 +47,16 @@ export function VentasVendedorClient() {
           total,
           vendedor:usuarios(nombre)
         `)
-        .eq("estado", "impresa")
+        .neq("estado", "anulada")
         .gte("created_at", start)
         .lte("created_at", end);
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const map = new Map<string, VendedorRendimiento>();
         
         for (const item of (facturas ?? []) as any[]) {
@@ -110,6 +115,8 @@ export function VentasVendedorClient() {
           />
         </div>
       </div>
+
+      <ReporteError mensaje={errorMsg} />
 
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="h-[300px]">

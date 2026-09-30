@@ -127,11 +127,11 @@ export function FullscreenScanner({ onDetected, onClose }: FullscreenScannerProp
 
     initCamera();
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     return () => {
       active = false;
       cleanup();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const cleanup = () => {

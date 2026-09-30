@@ -1,4 +1,4 @@
-# Analisis de Archivos — Proyecto Zentory
+﻿# Analisis de Archivos — Proyecto Zentory
 
 **Fecha:** Mayo 2026  
 **Scope:** Analisis completo de la estructura de archivos del proyecto para identificar archivos activos, huérfanos y recomendaciones de limpieza.
@@ -42,7 +42,7 @@ zentory/
 │   └── store/
 │       └── use-invoice-cart.ts # Zustand store
 ├── public/                     # Estaticos + PWA
-├── supabase/migrations/        # 9 migraciones SQL
+├── supabase/migrations/        # 12 migraciones SQL
 ├── testsprite_tests/           # Tests E2E + artifacts
 └── [config files]
 ```
@@ -76,7 +76,7 @@ Todos los demas archivos en `src/` estan correctamente referenciados en el grafo
 - **14 componentes** → cada uno es importado por al menos una pagina o componente padre.
 - **7 archivos lib** → cada export es consumido por al menos un consumidor.
 - **1 store** → usado por `nueva-factura-client.tsx`.
-- **9 migraciones** → ejecutadas en Supabase, necesarias para el schema.
+- **12 migraciones** → ejecutadas en Supabase, necesarias para el schema.
 
 ---
 
@@ -184,7 +184,7 @@ app/(app)/admin/reportes/page.tsx
 
 ### Archivos que deben conservarse
 
-- **Los 9 archivos de migracion** en `supabase/migrations/` — son el historial del schema de BD.
+- **Los 12 archivos de migracion** en `supabase/migrations/` — son el historial del schema de BD.
 - **`public/sw.js` y `public/workbox-*.js`** — service worker de la PWA, generado por `next-pwa`.
 - **`public/manifest.json`** — referenciado en el metadata del root layout.
 - **Todos los archivos en `src/`** (excepto `barcode-scanner.tsx`) — estan correctamente conectados en el grafo de dependencias.

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { ReporteError } from "./reporte-error";
 
 type ProductoBajoStock = {
   id: string;
@@ -19,6 +20,7 @@ export function BajoStockClient() {
   const supabase = createClient();
   const [data, setData] = useState<ProductoBajoStock[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +34,10 @@ export function BajoStockClient() {
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         // Filtramos donde stock_actual <= minimo_stock
         const filtrados = (productos as ProductoBajoStock[]).filter(
           (p) => p.stock_actual <= p.minimo_stock
@@ -67,6 +72,7 @@ export function BajoStockClient() {
       </div>
 
       <div className="w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

@@ -14,6 +14,7 @@ import {
   Cell
 } from "recharts";
 import { formatCOP } from "@/lib/invoice-calculations";
+import { ReporteError } from "./reporte-error";
 
 type ProductoAgrupado = {
   nombre: string;
@@ -25,6 +26,7 @@ export function ProductosTopClient() {
   const supabase = createClient();
   const [data, setData] = useState<ProductoAgrupado[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto últimos 30 días
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -39,20 +41,23 @@ export function ProductosTopClient() {
       const end = endOfDay(parseISO(fechaFin)).toISOString();
 
       const { data: facturasItems, error } = await supabase
-        .from("factura_items")
+        .from("items_factura")
         .select(`
           cantidad,
-          subtotal,
+          subtotal_item,
           producto:productos(nombre),
           factura:facturas!inner(estado, created_at)
         `)
-        .eq("factura.estado", "impresa")
+        .neq("factura.estado", "anulada")
         .gte("factura.created_at", start)
         .lte("factura.created_at", end);
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const map = new Map<string, ProductoAgrupado>();
         
         for (const item of (facturasItems ?? []) as any[]) {
@@ -64,7 +69,7 @@ export function ProductosTopClient() {
           map.set(nombre, {
             nombre,
             unidades: prev.unidades + item.cantidad,
-            ingresos: prev.ingresos + Number(item.subtotal)
+            ingresos: prev.ingresos + Number(item.subtotal_item)
           });
         }
         
@@ -117,6 +122,7 @@ export function ProductosTopClient() {
       </div>
 
       <div className="h-[400px] w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

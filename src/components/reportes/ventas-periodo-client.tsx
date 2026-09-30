@@ -16,6 +16,7 @@ import {
   AreaChart,
 } from "recharts";
 import { formatCOP } from "@/lib/invoice-calculations";
+import { ReporteError } from "./reporte-error";
 
 type Factura = {
   id: string;
@@ -27,6 +28,7 @@ export function VentasPeriodoClient() {
   const supabase = createClient();
   const [data, setData] = useState<Factura[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto últimos 30 días
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -42,14 +44,17 @@ export function VentasPeriodoClient() {
       const { data: facturas, error } = await supabase
         .from("facturas")
         .select("id, total, created_at")
-        .eq("estado", "impresa")
+        .neq("estado", "anulada")
         .gte("created_at", start)
         .lte("created_at", end)
         .order("created_at", { ascending: true });
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         setData(facturas || []);
       }
       setLoading(false);
@@ -104,6 +109,7 @@ export function VentasPeriodoClient() {
       </div>
 
       <div className="h-[400px] w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

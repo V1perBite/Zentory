@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { format, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { History, Search } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 
 type Cliente = {
   id: string;
@@ -19,7 +20,7 @@ type FacturaHistorial = {
   created_at: string;
   items: {
     cantidad: number;
-    subtotal: number;
+    subtotal_item: number;
     producto: {
       nombre: string;
     };
@@ -34,6 +35,7 @@ export function HistorialClienteClient() {
   
   const [loadingClientes, setLoadingClientes] = useState(true);
   const [loadingHistorial, setLoadingHistorial] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Cargar clientes
   useEffect(() => {
@@ -70,17 +72,22 @@ export function HistorialClienteClient() {
           numero_factura,
           total,
           created_at,
-          items:factura_items(
+          items:items_factura(
             cantidad,
-            subtotal,
+            subtotal_item,
             producto:productos(nombre)
           )
         `)
         .eq("cliente_id", clienteSeleccionado)
-        .eq("estado", "impresa")
+        .neq("estado", "anulada")
         .order("created_at", { ascending: false });
 
-      if (!error) {
+      if (error) {
+        console.error("Error fetching historial:", error);
+        setErrorMsg(error.message);
+        setData([]);
+      } else {
+        setErrorMsg(null);
         setData(data as any);
       }
       setLoadingHistorial(false);
@@ -152,6 +159,10 @@ export function HistorialClienteClient() {
           <div className="p-8 flex justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-teal-200 border-t-teal-600" />
           </div>
+        ) : errorMsg ? (
+          <div className="p-6">
+            <ReporteError mensaje={errorMsg} />
+          </div>
         ) : facturas.length === 0 ? (
           <div className="p-12 text-center text-slate-500 text-sm">
             Este cliente no tiene compras registradas.
@@ -185,7 +196,7 @@ export function HistorialClienteClient() {
                             <span className="font-medium mr-2">{item.cantidad}x</span>
                             {nombre || "Desconocido"}
                           </span>
-                          <span className="text-slate-600 font-medium">{formatCOP(item.subtotal)}</span>
+                          <span className="text-slate-600 font-medium">{formatCOP(item.subtotal_item)}</span>
                         </li>
                       );
                     })}

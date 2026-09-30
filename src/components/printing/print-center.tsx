@@ -14,7 +14,7 @@ type PrintCenterProps = {
 
 type PrintLog = {
   id: string;
-  numero: number;
+  numero: number | null;
   timestamp: Date;
   status: "ok" | "error";
 };
@@ -26,12 +26,20 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
   const processingRef = useRef(false);
   const currentIdRef = useRef<string | null>(null);
   const currentNumeroRef = useRef<number | null>(null);
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processNextRef = useRef<() => Promise<void>>(() => Promise.resolve());
   const [currentFactura, setCurrentFactura] = useState<FacturaConDetalle | null>(null);
   const [status, setStatus] = useState("Escuchando facturas pendientes...");
   const [logs, setLogs] = useState<PrintLog[]>([]);
 
-  const addLog = useCallback((numero: number, logStatus: "ok" | "error") => {
+  const clearWatchdog = useCallback(() => {
+    if (watchdogRef.current) {
+      clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    }
+  }, []);
+
+  const addLog = useCallback((numero: number | null, logStatus: "ok" | "error") => {
     setLogs((prev) => [
       { id: crypto.randomUUID(), numero, timestamp: new Date(), status: logStatus },
       ...prev.slice(0, 19),
@@ -39,21 +47,31 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
   }, []);
 
   const markPrinted = useCallback(async (facturaId: string) => {
-    await supabase.current.rpc("marcar_factura_impresa", { p_factura_id: facturaId });
+    // supabase-js no lanza excepciones: hay que revisar `error`.
+    const { error } = await supabase.current.rpc("marcar_factura_impresa", {
+      p_factura_id: facturaId,
+    });
+    if (error) throw new Error(error.message);
   }, []);
 
-  const getFacturaById = useCallback(async (facturaId: string) => {
-    const { data, error } = await supabase.current
-      .from("facturas")
-      .select(
-        "id,numero_factura,cliente_id,vendedor_id,subtotal,descuento_total,total,estado,created_at,cliente:clientes(id,nombre,identificacion,telefono,direccion),vendedor:usuarios(id,nombre),items:items_factura(id,factura_id,producto_id,cantidad,precio_unitario,descuento_item,tipo_descuento_item,subtotal_item,producto:productos(nombre,sku_code))",
-      )
-      .eq("id", facturaId)
-      .single();
+  const getFacturaById = useCallback(
+    async (
+      facturaId: string,
+    ): Promise<{ factura: FacturaConDetalle | null; error: string | null }> => {
+      const { data, error } = await supabase.current
+        .from("facturas")
+        .select(
+          "id,numero_factura,cliente_id,vendedor_id,subtotal,descuento_total,total,estado,created_at,cliente:clientes(id,nombre,identificacion,telefono,direccion),vendedor:usuarios(id,nombre),items:items_factura(id,factura_id,producto_id,cantidad,precio_unitario,descuento_item,tipo_descuento_item,subtotal_item,producto:productos(nombre,sku_code))",
+        )
+        .eq("id", facturaId)
+        .single();
 
-    if (error || !data) return null;
-    return data as unknown as FacturaConDetalle;
-  }, []);
+      if (error) return { factura: null, error: error.message };
+      if (!data) return { factura: null, error: "Factura no encontrada" };
+      return { factura: data as unknown as FacturaConDetalle, error: null };
+    },
+    [],
+  );
 
   // useReactToPrint con onAfterPrint para avanzar la cola automáticamente
   const handlePrint = useReactToPrint({
@@ -63,6 +81,8 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
       const id = currentIdRef.current;
       if (!id) return;
 
+      clearWatchdog();
+
       const facturaNum = currentNumeroRef.current;
       try {
         await markPrinted(id);
@@ -70,9 +90,10 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
           addLog(facturaNum, "ok");
           setStatus(`Factura #${facturaNum} impresa correctamente.`);
         }
-      } catch {
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
         if (facturaNum) addLog(facturaNum, "error");
-        setStatus("Error al marcar factura como impresa.");
+        setStatus(`Error al marcar la factura #${facturaNum ?? ""} como impresa: ${msg}`);
       }
 
       currentIdRef.current = null;
@@ -101,10 +122,16 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
 
     currentIdRef.current = nextId;
     currentNumeroRef.current = null;
-    const factura = await getFacturaById(nextId);
+
+    const { factura, error } = await getFacturaById(nextId);
     if (!factura) {
-      processingRef.current = false;
+      console.error("No se pudo cargar la factura para imprimir:", error);
+      addLog(null, "error");
+      setStatus(`Error al cargar la factura para imprimir: ${error}`);
       currentIdRef.current = null;
+      processingRef.current = false;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      void processNextRef.current();
       return;
     }
 
@@ -115,15 +142,35 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
     // Dar tiempo a que React renderice el ticket antes de imprimir
     await new Promise((resolve) => setTimeout(resolve, 400));
 
+    // Si el diálogo de impresión nunca responde, no dejamos la cola bloqueada.
+    clearWatchdog();
+    const watchId = factura.id;
+    watchdogRef.current = setTimeout(() => {
+      if (currentIdRef.current === watchId && processingRef.current) {
+        console.warn("La impresión no confirmó a tiempo:", watchId);
+        addLog(factura.numero_factura, "error");
+        setStatus(
+          `Error: la factura #${factura.numero_factura} no confirmó la impresión. Reintenta desde la lista.`,
+        );
+        currentIdRef.current = null;
+        currentNumeroRef.current = null;
+        processingRef.current = false;
+        void processNextRef.current();
+      }
+    }, 60_000);
+
     try {
       handlePrint();
-    } catch {
-      setStatus(`Error al imprimir factura #${factura.numero_factura}.`);
+    } catch (e) {
+      clearWatchdog();
+      const msg = e instanceof Error ? e.message : String(e);
+      setStatus(`Error al imprimir la factura #${factura.numero_factura}: ${msg}`);
       addLog(factura.numero_factura, "error");
       processingRef.current = false;
       currentIdRef.current = null;
+      void processNextRef.current();
     }
-  }, [getFacturaById, handlePrint, addLog]);
+  }, [getFacturaById, handlePrint, addLog, clearWatchdog]);
 
   // Mantener ref actualizada para romper la circularidad con onAfterPrint
   useEffect(() => {
@@ -142,12 +189,20 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
     };
 
     const loadBacklog = async () => {
-      const { data } = await client
+      const { data, error } = await client
         .from("facturas")
         .select("id")
         .eq("estado", FACTURA_ESTADOS.PENDIENTE_IMPRESION)
         .order("created_at", { ascending: true })
         .limit(100);
+
+      if (error) {
+        console.error("Error consultando la cola de impresión:", error.message);
+        if (!processingRef.current) {
+          setStatus(`Error consultando la cola de impresión: ${error.message}`);
+        }
+        return;
+      }
 
       (data ?? []).forEach((row) => {
         if (!queueRef.current.includes(row.id) && row.id !== currentIdRef.current) {
@@ -185,6 +240,7 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
     return () => {
       void client.removeChannel(channel);
       clearInterval(pollInterval);
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
       processingRef.current = false;
     };
   }, []);
@@ -225,7 +281,7 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
                   <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
                 )}
                 <span className="text-sm font-medium text-slate-700">
-                  Factura #{log.numero}
+                  {log.numero ? `Factura #${log.numero}` : "Factura sin cargar"}
                 </span>
                 <span className="ml-auto text-xs text-slate-400">
                   {log.timestamp.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}

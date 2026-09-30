@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { RefreshCw } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 
 type ProductoRotacion = {
   id: string;
@@ -17,6 +18,7 @@ export function RotacionClient() {
   const supabase = createClient();
   const [data, setData] = useState<ProductoRotacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto últimos 30 días
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -38,19 +40,23 @@ export function RotacionClient() {
 
       // 2. Obtener ventas en el periodo
       const { data: facturasItems, error: errVentas } = await supabase
-        .from("factura_items")
+        .from("items_factura")
         .select(`
           producto_id,
           cantidad,
           factura:facturas!inner(estado, created_at)
         `)
-        .eq("factura.estado", "impresa")
+        .neq("factura.estado", "anulada")
         .gte("factura.created_at", start)
         .lte("factura.created_at", end);
 
-      if (errProd || errVentas) {
-        console.error("Error fetching data:", errProd || errVentas);
+      const err = errProd ?? errVentas;
+      if (err) {
+        console.error("Error fetching data:", err);
+        setErrorMsg(err.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const ventasMap = new Map<string, number>();
         for (const item of (facturasItems ?? []) as any[]) {
           const pid = item.producto_id;
@@ -129,6 +135,7 @@ export function RotacionClient() {
       </div>
 
       <div className="w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

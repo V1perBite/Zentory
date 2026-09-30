@@ -84,7 +84,7 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
   if (currentFacturas.length > 0) {
     const ids = currentFacturas.map(f => f.id);
     const { data: items } = await supabase
-      .from("factura_items")
+      .from("items_factura")
       .select("cantidad, subtotal_item, producto:productos(id, nombre, precio_costo)")
       .in("factura_id", ids);
 
@@ -118,7 +118,7 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
   if (prevFacturas.length > 0) {
     const prevIds = prevFacturas.map(f => f.id);
     const { data: prevItems } = await supabase
-      .from("factura_items")
+      .from("items_factura")
       .select("cantidad, subtotal_item, producto:productos(precio_costo)")
       .in("factura_id", prevIds);
 

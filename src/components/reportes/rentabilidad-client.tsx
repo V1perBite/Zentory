@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
+import { ReporteError } from "./reporte-error";
 
 type ProductoRentabilidad = {
   nombre: string;
@@ -18,6 +19,7 @@ export function RentabilidadClient() {
   const supabase = createClient();
   const [data, setData] = useState<ProductoRentabilidad[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto últimos 30 días
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -32,20 +34,23 @@ export function RentabilidadClient() {
       const end = endOfDay(parseISO(fechaFin)).toISOString();
 
       const { data: facturasItems, error } = await supabase
-        .from("factura_items")
+        .from("items_factura")
         .select(`
           cantidad,
-          subtotal,
+          subtotal_item,
           producto:productos(nombre, precio_costo),
           factura:facturas!inner(estado, created_at)
         `)
-        .eq("factura.estado", "impresa")
+        .neq("factura.estado", "anulada")
         .gte("factura.created_at", start)
         .lte("factura.created_at", end);
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const map = new Map<string, ProductoRentabilidad>();
         
         for (const item of (facturasItems ?? []) as any[]) {
@@ -55,7 +60,7 @@ export function RentabilidadClient() {
             
           const prev = map.get(nombre) || { nombre, unidades: 0, ingresos: 0, costos: 0, utilidad: 0, margen: 0 };
           const unidades = prev.unidades + item.cantidad;
-          const ingresos = prev.ingresos + Number(item.subtotal);
+          const ingresos = prev.ingresos + Number(item.subtotal_item);
           const costos = prev.costos + (item.cantidad * precioCosto);
           const utilidad = ingresos - costos;
           const margen = ingresos > 0 ? (utilidad / ingresos) * 100 : 0;
@@ -117,6 +122,7 @@ export function RentabilidadClient() {
       </div>
 
       <div className="w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

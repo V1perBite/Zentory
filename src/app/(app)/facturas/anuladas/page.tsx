@@ -64,7 +64,7 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
 
   const { data: raw } = await query.limit(500);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line
   const rows = (raw ?? []).map((f: any) => {
     const u = f.usuario_anulacion;
     const usuarioNombre: string = Array.isArray(u)

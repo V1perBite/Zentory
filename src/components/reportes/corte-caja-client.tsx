@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { format, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { FileText, Receipt, TrendingUp, Users } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 
 type FacturaCorte = {
   id: string;
@@ -18,6 +19,7 @@ export function CorteCajaClient() {
   const supabase = createClient();
   const [data, setData] = useState<FacturaCorte[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto el día de hoy
   const [fecha, setFecha] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -38,14 +40,17 @@ export function CorteCajaClient() {
           created_at,
           vendedor:usuarios(nombre)
         `)
-        .eq("estado", "impresa")
+        .neq("estado", "anulada")
         .gte("created_at", start)
         .lte("created_at", end)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         setData((facturas as any) || []);
       }
       setLoading(false);
@@ -70,6 +75,7 @@ export function CorteCajaClient() {
 
   return (
     <div className="space-y-6">
+      <ReporteError mensaje={errorMsg} />
       <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-max">
         <label htmlFor="fecha-corte" className="text-sm font-medium text-slate-700">Seleccionar Día:</label>
         <input

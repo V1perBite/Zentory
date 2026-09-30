@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { PackageOpen, DollarSign } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 import {
   PieChart,
   Pie,
@@ -28,6 +29,7 @@ export function ValoracionInventarioClient() {
   const supabase = createClient();
   const [data, setData] = useState<ProductoValoracion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,7 +43,10 @@ export function ValoracionInventarioClient() {
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const mapeado = (productos as ProductoValoracion[]).map(p => ({
           ...p,
           valor_total: p.stock_actual * p.precio_costo
@@ -73,6 +78,7 @@ export function ValoracionInventarioClient() {
 
   return (
     <div className="space-y-6">
+      <ReporteError mensaje={errorMsg} />
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col">
           <div className="flex items-center gap-3 mb-3 text-emerald-700">

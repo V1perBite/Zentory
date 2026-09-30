@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { Star } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 
 type ClienteRendimiento = {
   id: string;
@@ -18,6 +19,7 @@ export function MejoresClientesClient() {
   const supabase = createClient();
   const [data, setData] = useState<ClienteRendimiento[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 90), "yyyy-MM-dd"));
   const [fechaFin, setFechaFin] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -35,13 +37,16 @@ export function MejoresClientesClient() {
           total,
           cliente:clientes(id, nombre, identificacion)
         `)
-        .eq("estado", "impresa")
+        .neq("estado", "anulada")
         .gte("created_at", start)
         .lte("created_at", end);
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const map = new Map<string, ClienteRendimiento>();
         
         for (const item of (facturas ?? []) as any[]) {
@@ -106,6 +111,7 @@ export function MejoresClientesClient() {
       </div>
 
       <div className="w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600" />

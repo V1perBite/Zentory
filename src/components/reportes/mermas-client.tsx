@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { FileMinus } from "lucide-react";
+import { ReporteError } from "./reporte-error";
 
 type Merma = {
   id: string;
@@ -21,6 +22,7 @@ export function MermasClient() {
   const supabase = createClient();
   const [data, setData] = useState<Merma[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
   // Por defecto últimos 30 días
   const [fechaInicio, setFechaInicio] = useState(format(subDays(new Date(), 30), "yyyy-MM-dd"));
@@ -44,15 +46,18 @@ export function MermasClient() {
           created_at,
           producto:productos(nombre)
         `)
-        .eq("tipo", "ajuste")
-        .lt("cantidad", 0) // Solo mermas (ajustes negativos)
+        .is("factura_id", null)
+        .in("tipo", ["salida", "ajuste"])
         .gte("created_at", start)
         .lte("created_at", end)
         .order("created_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching data:", error);
+        setErrorMsg(error.message);
+        setData([]);
       } else {
+        setErrorMsg(null);
         const result = (movimientos ?? []).map((m: any) => ({
           id: m.id,
           producto_id: m.producto_id,
@@ -108,6 +113,7 @@ export function MermasClient() {
       </div>
 
       <div className="w-full">
+        <ReporteError mensaje={errorMsg} />
         {loading ? (
           <div className="flex h-[200px] items-center justify-center">
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-rose-200 border-t-rose-600" />

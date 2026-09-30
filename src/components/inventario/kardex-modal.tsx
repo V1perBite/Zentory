@@ -37,18 +37,26 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
   const supabase = useRef(createClient());
   const [movimientos, setMovimientos] = useState<MovimientoKardex[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
 
   useEffect(() => {
     const fetchMovimientos = async () => {
       setLoading(true);
-      const { data } = await supabase.current
+      const { data, error } = await supabase.current
         .from("movimientos_stock")
         .select("id,tipo,cantidad,motivo,costo_unitario,factura_id,created_at")
         .eq("producto_id", productoId)
         .order("created_at", { ascending: true });
-      setMovimientos((data as MovimientoKardex[]) ?? []);
+      if (error) {
+        console.error("Error fetching kardex:", error);
+        setErrorMsg(error.message);
+        setMovimientos([]);
+      } else {
+        setErrorMsg(null);
+        setMovimientos((data as MovimientoKardex[]) ?? []);
+      }
       setLoading(false);
     };
     void fetchMovimientos();
@@ -65,26 +73,19 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
         return true;
       })
       .map((m) => {
-        const esEntrada = m.tipo === "entrada";
-        const esSalida = m.tipo === "salida";
+        // 'ajuste' es el valor histórico de una retirada manual de stock
+        // (el check de la tabla impide cantidades negativas, así que la
+        // dirección la define el tipo, nunca el signo).
+        const esSalida = m.tipo === "salida" || m.tipo === "ajuste";
         const costoUnit = m.costo_unitario ?? 0;
 
-        if (esEntrada) {
-          valorAcumulado = valorAcumulado + costoUnit * m.cantidad;
-          saldo = saldo + m.cantidad;
-        } else if (esSalida) {
+        if (esSalida) {
           const costoSalida = saldo > 0 ? (valorAcumulado / saldo) * m.cantidad : 0;
           valorAcumulado = Math.max(0, valorAcumulado - costoSalida);
           saldo = Math.max(0, saldo - m.cantidad);
         } else {
-          if (m.cantidad > 0) {
-            valorAcumulado = valorAcumulado + costoUnit * m.cantidad;
-            saldo = saldo + m.cantidad;
-          } else {
-            const costoSalida = saldo > 0 ? (valorAcumulado / saldo) * Math.abs(m.cantidad) : 0;
-            valorAcumulado = Math.max(0, valorAcumulado - costoSalida);
-            saldo = Math.max(0, saldo - Math.abs(m.cantidad));
-          }
+          valorAcumulado = valorAcumulado + costoUnit * m.cantidad;
+          saldo = saldo + m.cantidad;
         }
 
         const costoPromedio = saldo > 0 ? valorAcumulado / saldo : 0;
@@ -95,8 +96,8 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
           tipo: m.tipo,
           referencia: m.motivo + (m.factura_id ? ` (Factura)` : ""),
           costoUnitario: costoUnit,
-          entradas: esEntrada || (m.tipo === "ajuste" && m.cantidad > 0) ? m.cantidad : 0,
-          salidas: esSalida || (m.tipo === "ajuste" && m.cantidad < 0) ? Math.abs(m.cantidad) : 0,
+          entradas: esSalida ? 0 : m.cantidad,
+          salidas: esSalida ? m.cantidad : 0,
           saldo,
           costoPromedio,
           valorInventario: valorAcumulado,
@@ -160,6 +161,10 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
         <div className="overflow-x-auto">
           {loading ? (
             <p className="px-5 py-8 text-center text-sm text-slate-400">Cargando movimientos...</p>
+          ) : errorMsg ? (
+            <p className="px-5 py-8 text-center text-sm text-rose-600">
+              No se pudo cargar el kardex: <span className="font-mono">{errorMsg}</span>
+            </p>
           ) : kardexRows.length === 0 ? (
             <p className="px-5 py-8 text-center text-sm text-slate-400">Sin movimientos en el rango seleccionado.</p>
           ) : (
@@ -186,7 +191,7 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
                         className={
                           row.tipo === "entrada"
                             ? "rounded bg-emerald-100 px-1.5 py-0.5 text-emerald-700"
-                            : row.tipo === "salida"
+                            : row.tipo === "salida" || row.tipo === "ajuste"
                             ? "rounded bg-rose-100 px-1.5 py-0.5 text-rose-700"
                             : "rounded bg-slate-100 px-1.5 py-0.5 text-slate-600"
                         }

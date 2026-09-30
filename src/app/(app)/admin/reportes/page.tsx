@@ -50,23 +50,26 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   let totalVentas = 0;
   let totalCosto = 0;
   let totalUtilidad = 0;
+  let errorReporte: string | null = null;
 
   if (tab === "ventas") {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("facturas")
       .select(
-        "created_at,total,factura_items(cantidad,precio_unitario,producto:productos(precio_costo))",
+        "created_at,total,items_factura(cantidad,precio_unitario,producto:productos(precio_costo))",
       )
-      .eq("estado", "impresa")
+      .neq("estado", "anulada")
       .gte("created_at", `${desde}T00:00:00`)
       .lte("created_at", `${hasta}T23:59:59`)
       .order("created_at");
+
+    if (error) errorReporte = error.message;
 
     const map = new Map<string, { total: number; costo: number }>();
     for (const f of data ?? []) {
       const fecha = f.created_at.split("T")[0];
       const prev = map.get(fecha) ?? { total: 0, costo: 0 };
-      const costoFactura = (f.factura_items ?? []).reduce((acc: number, fi: {
+      const costoFactura = (f.items_factura ?? []).reduce((acc: number, fi: {
         cantidad: number;
         producto: { precio_costo: number } | { precio_costo: number }[] | null;
       }) => {
@@ -92,14 +95,16 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   let topProductos: { nombre: string; unidades: number; ingresos: number }[] = [];
 
   if (tab === "productos") {
-    const { data } = await supabase
-      .from("factura_items")
+    const { data, error } = await supabase
+      .from("items_factura")
       .select(
-        "cantidad,subtotal,producto:productos(nombre),factura:facturas!inner(estado,created_at)",
+        "cantidad,subtotal_item,producto:productos(nombre),factura:facturas!inner(estado,created_at)",
       )
-      .eq("factura.estado", "impresa")
+      .neq("factura.estado", "anulada")
       .gte("factura.created_at", `${desde}T00:00:00`)
       .lte("factura.created_at", `${hasta}T23:59:59`);
+
+    if (error) errorReporte = error.message;
 
     const map = new Map<string, { unidades: number; ingresos: number }>();
     // eslint-disable-next-line
@@ -110,7 +115,7 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
       const prev = map.get(nombre) ?? { unidades: 0, ingresos: 0 };
       map.set(nombre, {
         unidades: prev.unidades + fi.cantidad,
-        ingresos: prev.ingresos + Number(fi.subtotal),
+        ingresos: prev.ingresos + Number(fi.subtotal_item),
       });
     }
 
@@ -146,12 +151,14 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
   let porVendedor: { nombre: string; facturas: number; total: number; promedio: number }[] = [];
 
   if (tab === "vendedores") {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("facturas")
       .select("total,vendedor:usuarios(nombre)")
-      .eq("estado", "impresa")
+      .neq("estado", "anulada")
       .gte("created_at", `${desde}T00:00:00`)
       .lte("created_at", `${hasta}T23:59:59`);
+
+    if (error) errorReporte = error.message;
 
     const map = new Map<string, { facturas: number; total: number }>();
     // eslint-disable-next-line
@@ -186,6 +193,13 @@ export default async function ReportesPage({ searchParams }: ReportesPageProps) 
         <h1 className="text-2xl font-bold">Reportes</h1>
         <p className="text-sm text-slate-600">Análisis de ventas, productos, inventario y vendedores.</p>
       </div>
+
+      {errorReporte ? (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+          <p className="font-semibold">No se pudieron cargar los datos del reporte.</p>
+          <p className="mt-1 break-all font-mono text-xs">{errorReporte}</p>
+        </div>
+      ) : null}
 
       {/* Tab nav */}
       <div className="flex flex-wrap gap-1 rounded-xl border border-slate-200 bg-white p-1">

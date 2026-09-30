@@ -9,6 +9,8 @@ import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
 import { ClienteAutocomplete } from "@/components/facturas/cliente-autocomplete";
 import { Trash2, Printer, Save, ShoppingCart, Search, PackageSearch, Tag, ChevronDown } from "lucide-react";
+import Link from "next/link";
+import { ROLES } from "@/lib/constants";
 
 type ProductoCatalog = {
   id: string;
@@ -20,9 +22,10 @@ type ProductoCatalog = {
 
 type NuevaFacturaClientProps = {
   productos: ProductoCatalog[];
+  rol: string;
 };
 
-export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
+export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) {
   const supabase = useMemo(() => createClient(), []);
   const {
     items,
@@ -44,6 +47,11 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [ultimaFactura, setUltimaFactura] = useState<{
+    id: string;
+    numero: number;
+    aImpresion: boolean;
+  } | null>(null);
 
   type FlyParticle = { id: number; x: number; y: number; label: string };
   const [flyParticles, setFlyParticles] = useState<FlyParticle[]>([]);
@@ -145,6 +153,7 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
     setLoading(true);
     setError(null);
     setSuccess(null);
+    setUltimaFactura(null);
 
     const payload: Record<string, unknown> = {
       items: items.map((item: any) => ({
@@ -179,7 +188,13 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
       return;
     }
 
-    const result = data as { id: string; numero_factura: number };
+    const result = data as { id: string; numero_factura: number } | null;
+    if (!result?.id || !result.numero_factura) {
+      setLoading(false);
+      setError("La factura no se confirmó: el servidor no devolvió el número de factura.");
+      return;
+    }
+
     clear();
     setClienteId(null);
     setClienteNombre("Consumidor final");
@@ -189,6 +204,11 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
     setClienteTelefono("");
     setClienteDireccion("");
     setLoading(false);
+    setUltimaFactura({
+      id: result.id,
+      numero: result.numero_factura,
+      aImpresion: !guardarSinImprimir,
+    });
     setSuccess(
       guardarSinImprimir
         ? `Factura #${result.numero_factura} guardada correctamente.`
@@ -264,7 +284,29 @@ export function NuevaFacturaClient({ productos }: NuevaFacturaClientProps) {
 
   const invoicePanel = (
     <div className="flex flex-col gap-4 lg:h-full">
-      {success ? <p className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700 border border-emerald-100">{success}</p> : null}
+      {success ? (
+        <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+          <p>{success}</p>
+          {ultimaFactura ? (
+            <div className="mt-2 flex flex-wrap gap-4 text-xs font-semibold">
+              <Link
+                href={`/historial/${ultimaFactura.id}`}
+                className="underline underline-offset-2 hover:text-emerald-900"
+              >
+                Ver factura #{ultimaFactura.numero}
+              </Link>
+              {ultimaFactura.aImpresion && rol === ROLES.ADMIN ? (
+                <Link
+                  href="/imprimir"
+                  className="underline underline-offset-2 hover:text-emerald-900"
+                >
+                  Ir al centro de impresión
+                </Link>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       {error ? <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 border border-rose-100">{error}</p> : null}
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -3,7 +3,7 @@ import { requireProfile } from "@/lib/auth";
 import { NuevaFacturaClient } from "@/components/facturas/nueva-factura-client";
 
 export default async function NuevaFacturaPage() {
-  await requireProfile();
+  const profile = await requireProfile();
   const supabase = createClient();
 
   const { data: productosRaw } = await supabase
@@ -21,5 +21,5 @@ export default async function NuevaFacturaPage() {
     stock_actual: number;
   }[];
 
-  return <NuevaFacturaClient productos={productos} />;
+  return <NuevaFacturaClient productos={productos} rol={profile.rol} />;
 }

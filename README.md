@@ -31,11 +31,18 @@ copy .env.example .env.local
 ```env
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+TESTSPRITE_API_KEY=...        # opcional, sólo para la suite de tests
 ```
 
-4. Ejecutar migración SQL en Supabase:
+4. Crear el esquema de la base de datos en Supabase (SQL Editor):
 
-- Archivo: `supabase/migrations/20260429_001_init.sql`
+| Situación | Archivo |
+|---|---|
+| Base de datos **nueva** | `supabase/baseline/ZENTORY_BASELINE.sql` |
+| Base de datos **ya existente** | `supabase/migrations/20260925_012_reparacion_critica.sql` |
+
+Detalle e instrucciones paso a paso en [`supabase/README.md`](supabase/README.md).
 
 5. Ejecutar proyecto:
 
