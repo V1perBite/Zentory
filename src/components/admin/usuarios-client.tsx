@@ -2,7 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { createUsuario, toggleUsuarioActivo, togglePuedeCrearProductos } from "@/app/actions/admin-usuarios";
+import {
+  createUsuario,
+  toggleUsuarioActivo,
+  togglePuedeCrearProductos,
+  togglePermisoAuditoria,
+} from "@/app/actions/admin-usuarios";
 import { ROLES } from "@/lib/constants";
 import type { UserRole } from "@/lib/constants";
 
@@ -13,6 +18,8 @@ type UsuarioRow = {
   rol: string;
   activo: boolean;
   puede_crear_productos: boolean;
+  puede_ver_auditoria: boolean;
+  puede_exportar_auditoria: boolean;
 };
 
 type UsuariosClientProps = {
@@ -30,6 +37,7 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [togglingCrear, setTogglingCrear] = useState<string | null>(null);
+  const [togglingAud, setTogglingAud] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -80,6 +88,41 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
     }
   };
 
+  const handleToggleAuditoria = async (
+    id: string,
+    permiso: "ver" | "exportar",
+    valor: boolean,
+  ) => {
+    setTogglingAud(`${id}:${permiso}`);
+    setError(null);
+    const result = await togglePermisoAuditoria({ id, permiso, valor });
+    setTogglingAud(null);
+    if (result.error) {
+      setError(result.error);
+    } else {
+      router.refresh();
+    }
+  };
+
+  const botonPermiso = (
+    id: string,
+    permiso: "ver" | "exportar",
+    activo: boolean,
+  ) => (
+    <button
+      type="button"
+      disabled={togglingAud === `${id}:${permiso}`}
+      onClick={() => handleToggleAuditoria(id, permiso, activo)}
+      className={`rounded px-2 py-0.5 text-xs disabled:opacity-40 ${
+        activo
+          ? "border border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+          : "border border-slate-300 text-slate-600 hover:bg-slate-50"
+      }`}
+    >
+      {togglingAud === `${id}:${permiso}` ? "..." : activo ? "✓ Activo" : "Inactivo"}
+    </button>
+  );
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -105,6 +148,8 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
               <th className="px-3 py-2">Rol</th>
               <th className="px-3 py-2">Estado</th>
               <th className="px-3 py-2">Crear productos</th>
+              <th className="px-3 py-2">Ver auditoría</th>
+              <th className="px-3 py-2">Exportar auditoría</th>
               <th className="px-3 py-2"></th>
             </tr>
           </thead>
@@ -145,6 +190,20 @@ export function UsuariosClient({ usuarios, currentUserId }: UsuariosClientProps)
                     >
                       {togglingCrear === u.id ? "..." : u.puede_crear_productos ? "✓ Activo" : "Inactivo"}
                     </button>
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {u.rol === ROLES.ADMIN ? (
+                    <span className="text-xs text-slate-400">Siempre</span>
+                  ) : (
+                    botonPermiso(u.id, "ver", u.puede_ver_auditoria)
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {u.rol === ROLES.ADMIN ? (
+                    <span className="text-xs text-slate-400">Siempre</span>
+                  ) : (
+                    botonPermiso(u.id, "exportar", u.puede_exportar_auditoria)
                   )}
                 </td>
                 <td className="px-3 py-2">

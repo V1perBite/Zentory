@@ -17,22 +17,36 @@ export default async function AdminUsuariosPage() {
 
   const { data: permisos } = await supabase
     .from("usuarios")
-    .select("id,puede_crear_productos");
+    .select("id,puede_crear_productos,puede_ver_auditoria,puede_exportar_auditoria");
 
   const permisosMap = new Map(
-    (permisos ?? []).map((p: { id: string; puede_crear_productos: boolean }) => [p.id, p.puede_crear_productos])
+    (permisos ?? []).map(
+      (p: {
+        id: string;
+        puede_crear_productos: boolean;
+        puede_ver_auditoria: boolean;
+        puede_exportar_auditoria: boolean;
+      }) => [p.id, p],
+    ),
   );
 
-  const rows = (usuarios ?? []).map((u) => ({
-    ...u,
-    puede_crear_productos: permisosMap.get(u.id) ?? false,
-  })) as {
+  const rows = (usuarios ?? []).map((u) => {
+    const permiso = permisosMap.get(u.id);
+    return {
+      ...u,
+      puede_crear_productos: permiso?.puede_crear_productos ?? false,
+      puede_ver_auditoria: permiso?.puede_ver_auditoria ?? false,
+      puede_exportar_auditoria: permiso?.puede_exportar_auditoria ?? false,
+    };
+  }) as {
     id: string;
     nombre: string;
     email: string;
     rol: string;
     activo: boolean;
     puede_crear_productos: boolean;
+    puede_ver_auditoria: boolean;
+    puede_exportar_auditoria: boolean;
   }[];
 
   return (

@@ -3,11 +3,21 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { LogOut } from "lucide-react";
+import { registrarEventoAuditoria } from "@/app/actions/auditoria";
+import { AUDITORIA_ENTIDADES, AUDITORIA_MODULOS } from "@/lib/constants";
 
 export function SignOutButton({ collapsed = false }: { collapsed?: boolean }) {
   const router = useRouter();
 
   const handleSignOut = async () => {
+    // Se registra ANTES de cerrar sesión: después ya no habría usuario.
+    await registrarEventoAuditoria({
+      action: "LOGOUT",
+      module: AUDITORIA_MODULOS.USUARIOS,
+      entityType: AUDITORIA_ENTIDADES.USUARIO,
+      description: "Cierre de sesión",
+    });
+
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/login");

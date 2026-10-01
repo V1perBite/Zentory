@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { registrarEventoAuditoria } from "@/app/actions/auditoria";
+import { AUDITORIA_ENTIDADES, AUDITORIA_MODULOS } from "@/lib/constants";
 
 export function LoginForm() {
   const router = useRouter();
@@ -26,6 +28,14 @@ export function LoginForm() {
     if (loginError) {
       setLoading(false);
       setError(loginError.message);
+      await registrarEventoAuditoria({
+        action: "LOGIN_FALLIDO",
+        module: AUDITORIA_MODULOS.USUARIOS,
+        entityType: AUDITORIA_ENTIDADES.USUARIO,
+        entityRef: email,
+        description: `Inicio de sesión fallido: ${email}`,
+        metadata: { motivo: loginError.message },
+      });
       return;
     }
 
@@ -39,8 +49,24 @@ export function LoginForm() {
       await supabase.auth.signOut();
       setLoading(false);
       setError("Tu usuario está inactivo o no tiene perfil asignado.");
+      await registrarEventoAuditoria({
+        action: "LOGIN_FALLIDO",
+        module: AUDITORIA_MODULOS.USUARIOS,
+        entityType: AUDITORIA_ENTIDADES.USUARIO,
+        entityRef: email,
+        description: `Intento con usuario inactivo o sin perfil: ${email}`,
+      });
       return;
     }
+
+    await registrarEventoAuditoria({
+      action: "LOGIN",
+      module: AUDITORIA_MODULOS.USUARIOS,
+      entityType: AUDITORIA_ENTIDADES.USUARIO,
+      entityId: data.user.id,
+      entityRef: email,
+      description: `Inicio de sesión: ${email}`,
+    });
 
     router.replace("/dashboard");
     router.refresh();

@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Usuario } from "@/lib/types";
 
+export { hasPermission } from "@/lib/permissions";
+
 export async function getSessionUser() {
   const supabase = createClient();
   const {
@@ -17,7 +19,9 @@ export async function getCurrentProfile(): Promise<Usuario | null> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("usuarios")
-    .select("id,nombre,email,rol,activo,created_at")
+    .select(
+      "id,nombre,email,rol,activo,puede_crear_productos,puede_ver_auditoria,puede_exportar_auditoria,created_at",
+    )
     .eq("id", user.id)
     .single();
 

@@ -7,7 +7,40 @@ export type Usuario = {
   rol: UserRole;
   activo: boolean;
   puede_crear_productos?: boolean;
+  puede_ver_auditoria?: boolean;
+  puede_exportar_auditoria?: boolean;
   created_at: string;
+};
+
+export type AuditoriaEvento = {
+  id: string;
+  usuario_id: string | null;
+  usuario_nombre: string | null;
+  usuario_email: string | null;
+  accion: string;
+  modulo: string;
+  entidad: string;
+  entidad_id: string | null;
+  entidad_ref: string | null;
+  descripcion: string | null;
+  ip: string | null;
+  valores_previos: Record<string, unknown> | null;
+  valores_nuevos: Record<string, unknown> | null;
+  motivo: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+};
+
+export type AuditoriaFiltros = {
+  usuario?: string;
+  desde?: string;
+  hasta?: string;
+  accion?: string;
+  modulo?: string;
+  producto?: string;
+  factura?: string;
+  cliente?: string;
+  page?: number;
 };
 
 export type Producto = {

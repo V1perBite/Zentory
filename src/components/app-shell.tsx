@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Package,
@@ -17,11 +17,14 @@ import {
   ChevronRight,
   LogOut,
   Store,
-  BarChart3
+  BarChart3,
+  ShieldCheck
 } from "lucide-react";
 import { SignOutButton } from "@/components/signout-button";
 import type { Usuario } from "@/lib/types";
-import { ROLES } from "@/lib/constants";
+import { PERMISOS, ROLES } from "@/lib/constants";
+import { hasPermission } from "@/lib/permissions";
+import { sincronizarIp } from "@/app/actions/auditoria";
 
 type AppShellProps = {
   profile: Usuario;
@@ -32,6 +35,12 @@ export function AppShell({ profile, children }: AppShellProps) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Guarda la IP de la sesión una sola vez: los triggers de auditoría
+  // la usan para cada evento de tablas que ocurra después.
+  useEffect(() => {
+    void sincronizarIp();
+  }, []);
 
   const vendedorLinks = [
     { href: "/facturas", label: "Facturas", icon: FileText },
@@ -52,6 +61,10 @@ export function AppShell({ profile, children }: AppShellProps) {
           { href: "/admin/usuarios", label: "Usuarios", icon: Users },
         ]
       : vendedorLinks;
+
+  if (hasPermission(profile, PERMISOS.AUDITORIA_VER)) {
+    links.push({ href: "/auditoria", label: "Auditoría", icon: ShieldCheck });
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">

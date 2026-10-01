@@ -5,7 +5,7 @@ Hay **dos caminos**. Elige uno; no hace falta ejecutar los dos.
 | Situación | Archivo a ejecutar | Veces |
 |---|---|---|
 | **BD nueva** (recién creada en Supabase) | `baseline/ZENTORY_BASELINE.sql` | 1 sola vez |
-| **BD existente** (la que está en uso hoy) | `migrations/20260925_012_reparacion_critica.sql` y después `migrations/20260930_013_integridad_y_auditoria.sql` | 1 cada uno (idempotentes) |
+| **BD existente** (la que está en uso hoy) | `migrations/20260925_012_reparacion_critica.sql`, `migrations/20260930_013_integridad_y_auditoria.sql` y después `migrations/20261001_014_auditoria.sql` | 1 cada uno (idempotentes) |
 
 > ⚠️ **No ejecutes el baseline sobre una BD que ya tiene datos**: la tabla
 > `facturas` no se recrea, pero sí reemplazaría funciones, políticas RLS y
@@ -39,8 +39,11 @@ Conserva todos los datos: facturas, clientes, productos, kardex y usuarios.
 4. Con **New query**, pega **todo** el contenido de
    `migrations/20260930_013_integridad_y_auditoria.sql`.
 5. **Run**.
+6. Con **New query**, pega **todo** el contenido de
+   `migrations/20261001_014_auditoria.sql`.
+7. **Run**.
 
-Ambas son **idempotentes**: si las ejecutas dos veces no pasa nada.
+Las tres son **idempotentes**: si las ejecutas dos veces no pasa nada.
 
 ### Qué arregla 012
 
@@ -99,10 +102,38 @@ registrados. Puedes comentarlo si prefieres no modificar datos.
 | `20260924_011_anulacion_auditoria.sql` | Auditoría de anulación, trigger de bloqueo |
 | **`20260925_012_reparacion_critica.sql`** | **Reparación completa** |
 | **`20260930_013_integridad_y_auditoria.sql`** | **Backfill de auditoría, dedupe de clientes, UNIQUEs, RLS de items, columna huérfana** |
+| **`20261001_014_auditoria.sql`** | **Sistema de auditoría: tabla `auditoria_eventos`, permisos `puede_ver_auditoria` / `puede_exportar_auditoria`, IP de sesión, triggers en 6 tablas y RPC** |
 
 Las 11 primeras son el **historial**. En una BD nueva no se ejecutan: el
 baseline ya incluye todo su contenido en su versión corregida (incluida la
-policy de `items_factura` que corrige 013).
+policy de `items_factura` que corrige 013 y el bloque 11 = auditoría de 014).
+
+---
+
+## Auditoría (014)
+
+**Quién hizo qué, cuándo, sobre qué, con qué valor anterior → nuevo y por qué.**
+
+| Pieza | Dónde | Qué hace |
+|---|---|---|
+| `public.auditoria_eventos` | tabla | Fila por evento; **inmutable** (trigger `BEFORE UPDATE OR DELETE` lanza excepción, sin policies de escritura, `REVOKE` a los roles de la app) |
+| `public.auditoria_trigger()` | triggers en `productos`, `clientes`, `facturas`, `movimientos_stock`, `usuarios`, `negocio` | Escribe el evento con OLD/NEW exactos en **cada escritura**, venga de la app o de una consulta directa |
+| `public.auditoria_registrar(...)` | RPC | Única vía de la app y sólo para eventos sin fila en una tabla: `LOGIN`, `LOGIN_FALLIDO`, `LOGOUT`, `USUARIO_CREADO`, `EXPORTACION_AUDITORIA` |
+| `public.auditoria_registrar_ip(...)` | RPC | Guarda la IP de la sesión en `usuarios.ultima_ip` para que los triggers la incluyan |
+| `puede_ver_auditoria()` / `puede_exportar_auditoria()` | helpers RLS | Admin siempre; el resto según `usuarios.puede_ver_auditoria` / `usuarios.puede_exportar_auditoria` |
+| `src/lib/audit.ts` | app | `auditService.log()`: nunca lanza excepciones, un fallo de auditoría no rompe el negocio |
+| `/auditoria` | app | Listado con filtros (usuario, fechas, acción, módulo, producto, factura, cliente), detalle con tabla ANTES → DESPUÉS y exportación CSV |
+
+Los permisos se conceden desde **/admin/usuarios** (columnas *Ver auditoría* y
+*Exportar auditoría*) o con SQL:
+
+```sql
+update public.usuarios
+   set puede_ver_auditoria = true, puede_exportar_auditoria = true
+ where email = 'vendedor@empresa.com';
+```
+
+Comprobación: `scripts/verificar-auditoria.sql` (ejecutar en el SQL Editor).
 
 ---
 

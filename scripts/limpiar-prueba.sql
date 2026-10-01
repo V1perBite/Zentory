@@ -1,4 +1,4 @@
--- Generado por scripts/limpiar-prueba.js el 2026-09-30T06:47:03.335Z
+-- Generado por scripts/limpiar-prueba.js el 2026-10-01T19:41:18.587Z
 -- Borra TODOS los datos marcados [PRUEBA] (clientes, productos, facturas,
 -- items y movimientos). Idempotente.
 begin;
