@@ -1,12 +1,11 @@
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { UsuariosClient } from "@/components/admin/usuarios-client";
 
 export default async function AdminUsuariosPage() {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) redirect("/dashboard");
+  if (!isAdmin(profile)) redirect("/dashboard");
 
   const supabase = createClient();
 
@@ -55,7 +54,11 @@ export default async function AdminUsuariosPage() {
         <h1 className="text-2xl font-bold">Gestión de usuarios</h1>
         <p className="text-sm text-slate-600">Crea y administra los accesos al sistema.</p>
       </div>
-      <UsuariosClient usuarios={rows} currentUserId={profile.id} />
+      <UsuariosClient
+        usuarios={rows}
+        currentUserId={profile.id}
+        currentRol={profile.rol}
+      />
     </section>
   );
 }

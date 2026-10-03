@@ -10,7 +10,7 @@ import { NumberField } from "@/components/ui/number-field";
 import { ClienteAutocomplete } from "@/components/facturas/cliente-autocomplete";
 import { Trash2, Printer, Save, ShoppingCart, Search, PackageSearch, Tag, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { ROLES } from "@/lib/constants";
+import { isAdminRole } from "@/lib/permissions";
 
 type ProductoCatalog = {
   id: string;
@@ -295,7 +295,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
               >
                 Ver factura #{ultimaFactura.numero}
               </Link>
-              {ultimaFactura.aImpresion && rol === ROLES.ADMIN ? (
+              {ultimaFactura.aImpresion && isAdminRole(rol) ? (
                 <Link
                   href="/imprimir"
                   className="underline underline-offset-2 hover:text-emerald-900"

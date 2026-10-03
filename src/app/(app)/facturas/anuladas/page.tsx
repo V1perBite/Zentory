@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { ArrowLeft, Search, FileX } from "lucide-react";
 
@@ -31,7 +30,7 @@ function fmtFecha(iso: string | null | undefined): string {
 
 export default async function FacturasAnuladasPage({ searchParams }: PageProps) {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) redirect("/facturas/nueva");
+  if (!isAdmin(profile)) redirect("/facturas/nueva");
 
   const supabase = createClient();
 

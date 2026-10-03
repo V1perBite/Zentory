@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { formatCOP } from "@/lib/invoice-calculations";
 import Link from "next/link";
 
@@ -47,7 +46,7 @@ const finDia = (fecha: string) => diaLocal(fecha, 23, 59, 59, 999);
 
 export default async function ReportesPage({ searchParams }: ReportesPageProps) {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) redirect("/dashboard");
+  if (!isAdmin(profile)) redirect("/dashboard");
 
   const supabase = createClient();
   const tab = searchParams?.tab ?? "ventas";

@@ -1,11 +1,19 @@
 export const APP_NAME = "Zentory";
 
 export const ROLES = {
+  /** Sólo la cuenta protegida (davidromerogocel@gmail.com). No asignable desde la UI. */
+  SUPERADMIN: "superadmin",
   ADMIN: "admin",
   VENDEDOR: "vendedor",
 } as const;
 
 export type UserRole = (typeof ROLES)[keyof typeof ROLES];
+
+export const ROLES_LABEL: Record<UserRole, string> = {
+  superadmin: "Superadmin",
+  admin: "Admin",
+  vendedor: "Vendedor",
+};
 
 export const FACTURA_ESTADOS = {
   PENDIENTE_IMPRESION: "pendiente_impresion",

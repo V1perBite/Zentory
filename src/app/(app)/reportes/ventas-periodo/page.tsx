@@ -1,5 +1,4 @@
-import { requireProfile } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +7,7 @@ import { VentasPeriodoClient } from "@/components/reportes/ventas-periodo-client
 export default async function VentasPeriodoPage() {
   const profile = await requireProfile();
 
-  if (profile.rol !== ROLES.ADMIN) {
+  if (!isAdmin(profile)) {
     redirect("/dashboard");
   }
 

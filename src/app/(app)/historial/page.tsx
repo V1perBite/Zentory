@@ -1,6 +1,5 @@
-import { requireProfile } from "@/lib/auth";
+import { isAdminRole, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { HistorialClient } from "@/components/historial/historial-client";
 
 type HistorialPageProps = {
@@ -16,7 +15,7 @@ type HistorialPageProps = {
 export default async function HistorialPage({ searchParams }: HistorialPageProps) {
   const profile = await requireProfile();
 
-  const isAdmin = profile.rol === ROLES.ADMIN;
+  const isAdmin = isAdminRole(profile.rol);
 
   const supabase = createClient();
   const estado = searchParams?.estado?.trim() ?? "";

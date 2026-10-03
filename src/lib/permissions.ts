@@ -6,15 +6,38 @@ import type { Usuario } from "@/lib/types";
  * usable tanto en componentes cliente (menú) como en el servidor
  * (páginas y acciones).
  *
- * El admin tiene todos los permisos; el resto depende de las banderas
- * de la fila del usuario (usuarios.puede_*), nunca del cliente.
+ * Roles:
+ *   superadmin → todos los permisos; sólo esa cuenta puede gestionar
+ *                usuarios (y nunca a la propia cuenta superadmin).
+ *   admin      → todos los permisos menos tocar la fila superadmin.
+ *   vendedor   → sólo lo que habiliten las banderas de su fila
+ *                (usuarios.puede_*), nunca del cliente.
+ *
+ * En BD la misma regla vive en is_admin() / proteger_superadmin()
+ * (migrations 016), así que RLS y app nunca se contradicen.
  */
+
+/** true si el rol dado es admin o superadmin (para filas/props con el rol suelto). */
+export function isAdminRole(rol: string | null | undefined): boolean {
+  return rol === ROLES.ADMIN || rol === ROLES.SUPERADMIN;
+}
+
+/** true si el perfil tiene permisos de administrador. */
+export function isAdmin(profile: Usuario | null): boolean {
+  return profile ? isAdminRole(profile.rol) : false;
+}
+
+/** true sólo para la cuenta protegida (superadmin). */
+export function isSuperAdmin(profile: Usuario | null): boolean {
+  return profile?.rol === ROLES.SUPERADMIN;
+}
+
 export function hasPermission(
   profile: Usuario | null,
   permiso: Permiso,
 ): boolean {
   if (!profile || !profile.activo) return false;
-  if (profile.rol === ROLES.ADMIN) return true;
+  if (isAdmin(profile)) return true;
 
   switch (permiso) {
     case PERMISOS.AUDITORIA_VER:

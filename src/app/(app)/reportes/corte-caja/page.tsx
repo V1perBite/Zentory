@@ -1,5 +1,4 @@
-import { requireProfile } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +7,7 @@ import { CorteCajaClient } from "@/components/reportes/corte-caja-client";
 export default async function CorteCajaPage() {
   const profile = await requireProfile();
 
-  if (profile.rol !== ROLES.ADMIN) {
+  if (!isAdmin(profile)) {
     redirect("/dashboard");
   }
 

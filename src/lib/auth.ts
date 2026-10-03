@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Usuario } from "@/lib/types";
 
-export { hasPermission } from "@/lib/permissions";
+export { hasPermission, isAdmin, isAdminRole, isSuperAdmin } from "@/lib/permissions";
 
 export async function getSessionUser() {
   const supabase = createClient();

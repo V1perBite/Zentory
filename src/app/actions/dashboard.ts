@@ -1,8 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { startOfDay, startOfWeek, startOfMonth, subDays, subMonths, endOfDay, subWeeks } from "date-fns";
 
 export type DateRangeKey = "hoy" | "ultimos_7_dias" | "ultimos_30_dias" | "este_mes" | "mes_anterior";
@@ -53,7 +52,7 @@ function getDateRange(range: DateRangeKey) {
 
 export async function getDashboardStats(rangeKey: DateRangeKey) {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) {
+  if (!isAdmin(profile)) {
     throw new Error("No autorizado");
   }
 

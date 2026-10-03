@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { Ticket } from "@/components/printing/ticket";
 import type { FacturaConDetalle, Negocio } from "@/lib/types";
 
@@ -33,7 +32,7 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
     notFound();
   }
 
-  if (profile.rol !== ROLES.ADMIN && factura.vendedor_id !== profile.id) {
+  if (!isAdmin(profile) && factura.vendedor_id !== profile.id) {
     notFound();
   }
 

@@ -1,5 +1,4 @@
-import { requireProfile } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PrintCenter } from "@/components/printing/print-center";
@@ -8,7 +7,7 @@ import type { Negocio } from "@/lib/types";
 export default async function ImprimirPage() {
   const profile = await requireProfile();
 
-  if (profile.rol !== ROLES.ADMIN) {
+  if (!isAdmin(profile)) {
     redirect("/dashboard");
   }
 

@@ -1,6 +1,5 @@
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { AdminTools } from "@/components/inventario/admin-tools";
 import { InventarioClient } from "@/components/inventario/inventario-client";
 
@@ -20,7 +19,7 @@ export default async function InventarioPage() {
     .eq("id", profile.id)
     .single();
 
-  const puedeCrear = profile.rol === ROLES.ADMIN || permisoData?.puede_crear_productos === true;
+  const puedeCrear = isAdmin(profile) || permisoData?.puede_crear_productos === true;
 
   return (
     <section className="space-y-4">
@@ -29,7 +28,7 @@ export default async function InventarioPage() {
           <h1 className="text-2xl font-bold">Inventario</h1>
           <p className="text-sm text-slate-600">Consulta de stock y alertas mínimas.</p>
         </div>
-        {profile.rol === ROLES.ADMIN ? (
+        {isAdmin(profile) ? (
           <p className="text-xs text-slate-500">CRUD y ajustes de stock habilitados para admin.</p>
         ) : puedeCrear ? (
           <p className="text-xs text-amber-600 font-medium">Permiso temporal de creación activo.</p>
@@ -62,7 +61,7 @@ export default async function InventarioPage() {
           minimo_stock: p.minimo_stock,
           activo: p.activo,
         }))}
-        isAdmin={profile.rol === ROLES.ADMIN}
+        isAdmin={isAdmin(profile)}
       />
 
     </section>

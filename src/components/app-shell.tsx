@@ -22,8 +22,8 @@ import {
 } from "lucide-react";
 import { SignOutButton } from "@/components/signout-button";
 import type { Usuario } from "@/lib/types";
-import { PERMISOS, ROLES } from "@/lib/constants";
-import { hasPermission } from "@/lib/permissions";
+import { PERMISOS } from "@/lib/constants";
+import { hasPermission, isAdmin } from "@/lib/permissions";
 import { sincronizarIp } from "@/app/actions/auditoria";
 
 type AppShellProps = {
@@ -49,7 +49,7 @@ export function AppShell({ profile, children }: AppShellProps) {
   ];
 
   const links =
-    profile.rol === ROLES.ADMIN
+    isAdmin(profile)
       ? [
           { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
           { href: "/inventario", label: "Inventario", icon: Package },

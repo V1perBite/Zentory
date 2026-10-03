@@ -1,15 +1,14 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { requireProfile } from "@/lib/auth";
-import { ROLES } from "@/lib/constants";
+import { isAdmin, requireProfile } from "@/lib/auth";
 
 export async function anularFactura(
   facturaId: string,
   razon?: string,
 ): Promise<{ error?: string }> {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) return { error: "Sin permisos." };
+  if (!isAdmin(profile)) return { error: "Sin permisos." };
 
   const razonTrim = (razon ?? "").trim();
   if (razonTrim.length < 10) {

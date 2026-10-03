@@ -47,7 +47,7 @@
 
 create extension if not exists pgcrypto;
 
-do $$ begin create type public.user_role        as enum ('admin', 'vendedor');            exception when duplicate_object then null; end $$;
+do $$ begin create type public.user_role        as enum ('admin', 'vendedor', 'superadmin');            exception when duplicate_object then null; end $$;
 do $$ begin create type public.movimiento_tipo  as enum ('entrada', 'salida', 'ajuste');  exception when duplicate_object then null; end $$;
 do $$ begin create type public.factura_estado   as enum ('pendiente_impresion', 'impresa', 'anulada'); exception when duplicate_object then null; end $$;
 do $$ begin create type public.tipo_descuento   as enum ('porcentaje', 'valor');          exception when duplicate_object then null; end $$;
@@ -206,7 +206,7 @@ language sql stable security definer set search_path = public
 as $$
   select exists (
     select 1 from public.usuarios u
-    where u.id = auth.uid() and u.rol = 'admin' and u.activo = true
+    where u.id = auth.uid() and u.rol in ('admin', 'superadmin') and u.activo = true
   );
 $$;
 
@@ -418,7 +418,7 @@ begin
   if not exists (
     select 1 from public.usuarios u
     where u.id = v_user_id and u.activo = true
-      and u.rol in ('admin', 'vendedor')
+      and u.rol in ('admin', 'superadmin', 'vendedor')
   ) then
     raise exception 'Usuario sin permisos para facturar';
   end if;
@@ -795,11 +795,73 @@ create policy usuarios_select_self_or_admin on public.usuarios
 
 drop policy if exists usuarios_update_admin on public.usuarios;
 create policy usuarios_update_admin on public.usuarios
-  for update using (public.is_admin()) with check (public.is_admin());
+  for update
+  using (public.is_admin() and (id = auth.uid() or rol <> 'superadmin'))
+  with check (public.is_admin() and (id = auth.uid() or rol <> 'superadmin'));
 
 drop policy if exists usuarios_insert_admin on public.usuarios;
 create policy usuarios_insert_admin on public.usuarios
   for insert with check (public.is_admin());
+
+-- ── superadmin ─────────────────────────────────────────────
+-- Rol reservado: sólo una cuenta puede tenerlo y el trigger impide
+-- crear una segunda, quitarle el rol, desactivarla o eliminarla
+-- (también vía cascade desde auth.users). Para asignarlo en una BD
+-- nueva, después de crear los usuarios desde la app:
+--   update public.usuarios
+--      set rol = 'superadmin'
+--    where lower(email) = 'dueno@empresa.com';
+create or replace function public.proteger_superadmin()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if new.rol = 'superadmin' and exists (
+      select 1 from public.usuarios u
+      where u.rol = 'superadmin' and u.id <> new.id
+    ) then
+      raise exception 'Solo puede existir un superadmin en el sistema';
+    end if;
+    return new;
+  end if;
+
+  if tg_op = 'UPDATE' then
+    if new.rol = 'superadmin'
+       and old.rol <> 'superadmin'
+       and exists (
+      select 1 from public.usuarios u
+      where u.rol = 'superadmin' and u.id <> new.id
+    ) then
+      raise exception 'Solo puede existir un superadmin en el sistema';
+    end if;
+
+    if old.rol = 'superadmin' and new.rol <> 'superadmin' then
+      raise exception 'No se puede quitar el rol superadmin a la cuenta protegida';
+    end if;
+
+    if old.rol = 'superadmin' and new.activo = false then
+      raise exception 'La cuenta superadmin no puede desactivarse';
+    end if;
+
+    return new;
+  end if;
+
+  if tg_op = 'DELETE' then
+    if old.rol = 'superadmin' then
+      raise exception 'No se puede eliminar la cuenta superadmin';
+    end if;
+    return old;
+  end if;
+
+  return null;
+end;
+$$;
+
+drop trigger if exists trg_proteger_superadmin on public.usuarios;
+create trigger trg_proteger_superadmin
+  before insert or update or delete on public.usuarios
+  for each row execute procedure public.proteger_superadmin();
 
 -- ── productos ───────────────────────────────────────────────
 drop policy if exists productos_select_authenticated on public.productos;
@@ -1230,7 +1292,8 @@ begin
   end if;
 
   if upper(p_accion) not in (
-    'LOGIN', 'LOGOUT', 'LOGIN_FALLIDO', 'USUARIO_CREADO', 'EXPORTACION_AUDITORIA'
+    'LOGIN', 'LOGOUT', 'LOGIN_FALLIDO', 'USUARIO_CREADO',
+    'USUARIO_MODIFICADO', 'USUARIO_ELIMINADO', 'EXPORTACION_AUDITORIA'
   ) then
     raise exception 'Auditoría: acción % registrada por trigger, no por RPC', p_accion;
   end if;

@@ -1,13 +1,12 @@
-import { requireProfile } from "@/lib/auth";
+import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ROLES } from "@/lib/constants";
 import { redirect } from "next/navigation";
 import { NegocioForm } from "@/components/admin/negocio-form";
 import type { Negocio } from "@/lib/types";
 
 export default async function AdminNegocioPage() {
   const profile = await requireProfile();
-  if (profile.rol !== ROLES.ADMIN) redirect("/dashboard");
+  if (!isAdmin(profile)) redirect("/dashboard");
 
   const supabase = createClient();
 
