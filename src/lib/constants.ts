@@ -38,6 +38,7 @@ export const AUDITORIA_MODULOS = {
   PRODUCTOS: "PRODUCTOS",
   INVENTARIO: "INVENTARIO",
   FACTURACION: "FACTURACION",
+  COMPRAS: "COMPRAS",
   CONFIGURACION: "CONFIGURACION",
   SISTEMA: "SISTEMA",
 } as const;
@@ -50,6 +51,7 @@ export const AUDITORIA_ENTIDADES = {
   PRODUCTO: "PRODUCTO",
   MOVIMIENTO: "MOVIMIENTO",
   FACTURA: "FACTURA",
+  FACTURA_COMPRA: "FACTURA_COMPRA",
   CLIENTE: "CLIENTE",
   NEGOCIO: "NEGOCIO",
 } as const;
@@ -58,7 +60,7 @@ export type AuditoriaEntidad =
   (typeof AUDITORIA_ENTIDADES)[keyof typeof AUDITORIA_ENTIDADES];
 
 // Deben coincidir exactamente con los valores que escribe
-// supabase/migrations/20261001_014_auditoria.sql
+// supabase/migrations/20261001_014_auditoria.sql y 20261007_019_facturas_compra.sql
 export const ACCIONES_AUDITORIA: Record<string, string> = {
   // Usuarios / sesión
   LOGIN: "Inicio de sesión",
@@ -98,6 +100,10 @@ export const ACCIONES_AUDITORIA: Record<string, string> = {
   CLIENTE_CREADO: "Cliente creado",
   CLIENTE_MODIFICADO: "Cliente modificado",
   CLIENTE_ELIMINADO: "Cliente eliminado",
+  // Compras (facturas de proveedor)
+  COMPRA_CREADA: "Factura de compra creada",
+  COMPRA_MODIFICADA: "Factura de compra modificada",
+  COMPRA_ELIMINADA: "Factura de compra eliminada",
   // Configuración
   CONFIGURACION_CREADA: "Configuración creada",
   CONFIGURACION_MODIFICADA: "Configuración modificada",
@@ -105,6 +111,7 @@ export const ACCIONES_AUDITORIA: Record<string, string> = {
   // Exportaciones
   EXPORTACION_INVENTARIO: "Exportación de inventario",
   EXPORTACION_REPORTE: "Exportación de reporte",
+  EXPORTACION_COMPRA: "Exportación de compras",
   // Sistema
   EXPORTACION_AUDITORIA: "Exportación de auditoría",
 };
@@ -114,6 +121,7 @@ export const MODULO_LABEL: Record<string, string> = {
   PRODUCTOS: "Productos",
   INVENTARIO: "Inventario",
   FACTURACION: "Facturación",
+  COMPRAS: "Compras",
   CONFIGURACION: "Configuración",
   SISTEMA: "Sistema",
 };
@@ -124,6 +132,25 @@ export const MODULO_BADGE: Record<string, string> = {
   PRODUCTOS: "bg-indigo-100 text-indigo-700",
   INVENTARIO: "bg-amber-100 text-amber-700",
   FACTURACION: "bg-emerald-100 text-emerald-700",
+  COMPRAS: "bg-orange-100 text-orange-700",
   CONFIGURACION: "bg-sky-100 text-sky-700",
   SISTEMA: "bg-slate-200 text-slate-600",
 };
+
+/** Estados del módulo Compras (facturas de proveedor). */
+export const ESTADOS_COMPRA = {
+  pendiente: "Pendiente",
+  parcial: "Parcial",
+  pagada: "Pagada",
+  anulada: "Anulada",
+} as const;
+
+export const ESTADO_COMPRA_BADGE: Record<string, string> = {
+  pendiente: "bg-amber-100 text-amber-700",
+  parcial: "bg-sky-100 text-sky-700",
+  pagada: "bg-emerald-100 text-emerald-700",
+  anulada: "bg-slate-100 text-slate-500",
+};
+
+/** Días desde la fecha de recibida a partir de los cuales se alerta. */
+export const DIAS_COMPRA_VENCIDA = 30;

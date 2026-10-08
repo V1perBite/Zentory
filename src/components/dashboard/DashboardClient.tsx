@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   LineChart,
   Line,
@@ -20,7 +21,8 @@ import {
   TrendingDown,
   AlertTriangle,
   Info,
-  Loader2
+  Loader2,
+  Receipt
 } from "lucide-react";
 import { getDashboardStats, type DateRangeKey } from "@/app/actions/dashboard";
 
@@ -65,9 +67,24 @@ export default function DashboardClient() {
     );
   }
 
-  const { metrics, chartData, topProductos, estadosCount, alertas } = data || {
+  const { metrics, chartData, topProductos, estadosCount, compras, alertas } = data || {
     metrics: { ventas: 0, ganancia: 0, facturas: 0, prevVentas: 0, prevGanancia: 0 },
-    chartData: [], topProductos: [], estadosCount: { pagadas: 0, pendientes: 0, vencidas: 0, anuladas: 0 }, alertas: { lowStockCount: 0, lowStockNames: "" }
+    chartData: [], topProductos: [], estadosCount: { pagadas: 0, pendientes: 0, vencidas: 0, anuladas: 0 },
+    compras: {
+      pendientePago: 0,
+      pendientesCount: 0,
+      vencidasCount: 0,
+      diasVencida: 30,
+      porPagar: [] as Array<{
+        id: string;
+        empresa: string;
+        numero_factura: string | null;
+        valor: number;
+        fecha_recibida: string;
+        dias: number;
+      }>,
+    },
+    alertas: { lowStockCount: 0, lowStockNames: "", comprasVencidasCount: 0 }
   };
 
   const margen = metrics.ventas > 0 ? ((metrics.ganancia / metrics.ventas) * 100).toFixed(1) : "0.0";
@@ -135,7 +152,7 @@ export default function DashboardClient() {
       </div>
 
       {/* KPIs Principales */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Ventas */}
         <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
           <span className="text-sm font-medium text-slate-500">Ventas Totales</span>
@@ -175,6 +192,17 @@ export default function DashboardClient() {
           <span className="text-sm font-medium text-slate-500">Ticket Promedio</span>
           <span className="text-2xl font-bold text-slate-800">{formatCurrency(Number(ticketPromedio))}</span>
           <span className="text-xs text-slate-400 mt-1">Ventas / Facturas</span>
+        </div>
+
+        {/* Pendiente de pago (Compras) — saldo actual, no depende del rango */}
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col gap-1">
+          <span className="text-sm font-medium text-slate-500">Pendiente de Pago</span>
+          <span className={`text-2xl font-bold ${compras.pendientePago > 0 ? "text-amber-600" : "text-slate-800"}`}>
+            {formatCurrency(compras.pendientePago)}
+          </span>
+          <span className="text-xs text-slate-400 mt-1">
+            {compras.pendientesCount} factura{compras.pendientesCount === 1 ? "" : "s"} · saldo actual
+          </span>
         </div>
       </div>
 
@@ -281,7 +309,7 @@ export default function DashboardClient() {
       </div>
 
       {/* Operaciones y Alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
           <h3 className="text-base font-semibold text-slate-800 mb-4">Estado de Facturación</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1 content-center">
@@ -308,6 +336,51 @@ export default function DashboardClient() {
           </div>
         </div>
 
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-800">
+              <Receipt size={18} className="text-orange-600" />
+              Compras por Pagar
+            </h3>
+            <Link href="/compras" className="text-xs font-semibold text-orange-700 hover:text-orange-800 underline">
+              Ver todas
+            </Link>
+          </div>
+          {compras.porPagar.length > 0 ? (
+            <ul className="space-y-2 flex-1">
+              {compras.porPagar.map((c: {
+                id: string;
+                empresa: string;
+                numero_factura: string | null;
+                valor: number;
+                fecha_recibida: string;
+                dias: number;
+              }) => (
+                <li key={c.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-800">{c.empresa}</p>
+                    <p className="text-[11px] text-slate-500">
+                      {c.numero_factura ? `#${c.numero_factura} · ` : ""}
+                      recibida {c.fecha_recibida}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-sm font-bold text-slate-800">{formatCurrency(c.valor)}</p>
+                    <p className={`text-[11px] ${c.dias > compras.diasVencida ? "text-rose-600 font-semibold" : "text-slate-500"}`}>
+                      {c.dias} d
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm font-medium text-slate-600">Nada por pagar</p>
+              <p className="mt-1 text-xs text-slate-500">Todas las facturas de compra están saldadas.</p>
+            </div>
+          )}
+        </div>
+
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <h3 className="text-base font-semibold text-slate-800 mb-4">Alertas del Sistema</h3>
           <div className="space-y-3">
@@ -317,6 +390,18 @@ export default function DashboardClient() {
                 <div>
                   <p className="text-sm font-semibold text-rose-800">Inventario Crítico</p>
                   <p className="text-xs text-rose-600 mt-0.5">Hay {alertas.lowStockCount} productos con stock bajo o crítico. ({alertas.lowStockNames}{alertas.lowStockCount > 3 ? '...' : ''})</p>
+                </div>
+              </div>
+            )}
+
+            {alertas.comprasVencidasCount > 0 && (
+              <div className="flex gap-3 items-start p-3 bg-orange-50 border border-orange-100 rounded-lg">
+                <AlertTriangle className="text-orange-600 shrink-0 mt-0.5" size={18} />
+                <div>
+                  <p className="text-sm font-semibold text-orange-800">Compras sin pagar hace {compras.diasVencida}+ días</p>
+                  <p className="text-xs text-orange-700 mt-0.5">
+                    {alertas.comprasVencidasCount} factura{alertas.comprasVencidasCount === 1 ? "" : "s"} de compra superan los {compras.diasVencida} días desde que se recibieron.
+                  </p>
                 </div>
               </div>
             )}

@@ -114,3 +114,21 @@ export type FacturaConDetalle = Factura & {
     producto: Pick<Producto, "nombre" | "sku_code">;
   }>;
 };
+
+/** Registro contable de una factura de proveedor (módulo Compras). */
+export type EstadoCompra = "pendiente" | "parcial" | "pagada" | "anulada";
+
+export type FacturaCompra = {
+  id: string;
+  empresa: string;
+  numero_factura: string | null;
+  concepto: string | null;
+  valor: number;
+  fecha_recibida: string;
+  fecha_pago: string | null;
+  estado: EstadoCompra;
+  notas: string | null;
+  creado_por: string | null;
+  created_at: string;
+  updated_at: string;
+};

@@ -50,6 +50,7 @@ factura — todo eso se decide en el servidor.
 | `/inventario` | `productos`, `movimientos_stock` | **Límite 200**; el kardex depende de `movimientos_stock`. **`precio_costo` no viaja en las props si el usuario no es admin** (`page.tsx:67`) |
 | `/reportes` (11 subreportes) | `facturas`, `items_factura`, `productos`, `clientes`, `movimientos_stock` | **Sin `limit()`** en ninguno → PostgREST corta en `db.max_rows` (1000) |
 | `/admin/reportes` | igual que arriba | Duplicado funcional del hub `/reportes` |
+| `/compras` | `facturas_compra` | **Sólo admin/superadmin** (guard en `page.tsx` + RLS admin en las 4 operaciones). **Límite 500**. No toca productos, stock ni kardex |
 | `/admin/usuarios` | `usuarios` | lista completa |
 | `/admin/negocio` | `negocio` + `negocio_mensajes` | `.select("*, negocio_mensajes(*)")` |
 
@@ -113,6 +114,6 @@ Esto queda **documentado, no modificado** en esta fase (decisión del proyecto):
 | Situación | Archivo a ejecutar |
 |---|---|
 | Base de datos **nueva** (recién creada) | `supabase/baseline/ZENTORY_BASELINE.sql` — una sola vez |
-| Base de datos **existente** (la actual) | `supabase/migrations/` del **012 al 018**, en orden, cada uno una vez (idempotentes) |
+| Base de datos **existente** (la actual) | `supabase/migrations/` del **012 al 019**, en orden, cada uno una vez (idempotentes) |
 
 Detalle e instrucciones en `supabase/README.md`.

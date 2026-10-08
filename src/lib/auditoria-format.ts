@@ -30,6 +30,13 @@ const CAMPO_LABEL: Record<string, string> = {
   id: "ID",
   created_at: "Creado",
   updated_at: "Actualizado",
+  empresa: "Empresa",
+  valor: "Valor",
+  fecha_recibida: "Fecha de recibida",
+  fecha_pago: "Fecha de pago",
+  concepto: "Concepto",
+  notas: "Notas",
+  creado_por: "Registrada por",
 };
 
 export function formatoFechaAuditoria(iso: string | null | undefined): string {

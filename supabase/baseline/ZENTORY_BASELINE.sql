@@ -160,6 +160,27 @@ create table if not exists public.negocio_mensajes (
   created_at  timestamptz not null default now()
 );
 
+-- Facturas de compra (019): registro contable de lo que se le compra a
+-- los proveedores. No toca productos, stock, kardex ni precio_costo.
+create table if not exists public.facturas_compra (
+  id              uuid primary key default gen_random_uuid(),
+  empresa         text not null check (length(btrim(empresa)) > 0),
+  numero_factura  text,
+  concepto        text,
+  valor           numeric(14,2) not null default 0 check (valor >= 0),
+  fecha_recibida  date not null default current_date,
+  fecha_pago      date,
+  estado          text not null default 'pendiente'
+                  check (estado in ('pendiente', 'parcial', 'pagada', 'anulada')),
+  notas           text,
+  creado_por      uuid default auth.uid() references public.usuarios (id) on delete set null,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  constraint facturas_compra_pago_posterior check (
+    fecha_pago is null or fecha_pago >= fecha_recibida
+  )
+);
+
 
 -- ============================================================
 -- 3. ÍNDICES
@@ -193,6 +214,13 @@ create index if not exists idx_negocio_mensajes_negocio_tipo_orden
 create index if not exists idx_facturas_anuladas_fecha
   on public.facturas (fecha_anulacion desc)
   where estado = 'anulada';
+
+create index if not exists idx_facturas_compra_fecha_recibida
+  on public.facturas_compra (fecha_recibida desc, created_at desc);
+create index if not exists idx_facturas_compra_estado
+  on public.facturas_compra (estado) where estado in ('pendiente', 'parcial');
+create index if not exists idx_facturas_compra_empresa
+  on public.facturas_compra (lower(btrim(empresa)));
 
 
 -- ============================================================
@@ -785,6 +813,7 @@ alter table public.facturas          enable row level security;
 alter table public.items_factura     enable row level security;
 alter table public.negocio           enable row level security;
 alter table public.negocio_mensajes  enable row level security;
+alter table public.facturas_compra   enable row level security;
 
 -- ── usuarios ────────────────────────────────────────────────
 -- Se permite leer la propia fila aunque esté inactiva: la aplicación
@@ -983,6 +1012,22 @@ create policy negocio_mensajes_update_admin on public.negocio_mensajes
 
 drop policy if exists negocio_mensajes_delete_admin on public.negocio_mensajes;
 create policy negocio_mensajes_delete_admin on public.negocio_mensajes
+  for delete using (public.is_admin());
+
+drop policy if exists facturas_compra_select_admin on public.facturas_compra;
+create policy facturas_compra_select_admin on public.facturas_compra
+  for select using (public.is_admin());
+
+drop policy if exists facturas_compra_insert_admin on public.facturas_compra;
+create policy facturas_compra_insert_admin on public.facturas_compra
+  for insert with check (public.is_admin());
+
+drop policy if exists facturas_compra_update_admin on public.facturas_compra;
+create policy facturas_compra_update_admin on public.facturas_compra
+  for update using (public.is_admin()) with check (public.is_admin());
+
+drop policy if exists facturas_compra_delete_admin on public.facturas_compra;
+create policy facturas_compra_delete_admin on public.facturas_compra
   for delete using (public.is_admin());
 
 
@@ -1294,7 +1339,9 @@ begin
   if upper(p_accion) not in (
     'LOGIN', 'LOGOUT', 'LOGIN_FALLIDO', 'USUARIO_CREADO',
     'USUARIO_MODIFICADO', 'USUARIO_ELIMINADO',
-    'EXPORTACION_AUDITORIA', 'EXPORTACION_INVENTARIO', 'EXPORTACION_REPORTE'
+    'EXPORTACION_AUDITORIA', 'EXPORTACION_INVENTARIO', 'EXPORTACION_REPORTE',
+    'COMPRA_CREADA', 'COMPRA_MODIFICADA', 'COMPRA_ELIMINADA',
+    'EXPORTACION_COMPRA'
   ) then
     raise exception 'Auditoría: acción % registrada por trigger, no por RPC', p_accion;
   end if;

@@ -5,7 +5,7 @@ Hay **dos caminos**. Elige uno; no hace falta ejecutar los dos.
 | Situación | Archivo a ejecutar | Veces |
 |---|---|---|
 | **BD nueva** (recién creada en Supabase) | `baseline/ZENTORY_BASELINE.sql` | 1 sola vez |
-| **BD existente** (la que está en uso hoy) | `migrations/20260925_012_reparacion_critica.sql`, `migrations/20260930_013_integridad_y_auditoria.sql`, `migrations/20261001_014_auditoria.sql` y después `20261002_015_superadmin_rol.sql`, `20261002_016_superadmin_guardas.sql` y `20261002_017_confirmar_factura_superadmin.sql` y `20261006_018_exportaciones_auditoria.sql` | 1 cada uno (idempotentes, en ese orden) |
+| **BD existente** (la que está en uso hoy) | `migrations/` **012 → 019** en orden: `20260925_012_reparacion_critica.sql`, `20260930_013_integridad_y_auditoria.sql`, `20261001_014_auditoria.sql`, `20261002_015_superadmin_rol.sql`, `20261002_016_superadmin_guardas.sql`, `20261002_017_confirmar_factura_superadmin.sql`, `20261006_018_exportaciones_auditoria.sql`, `20261007_019_facturas_compra.sql` | 1 cada uno (idempotentes, en ese orden) |
 
 > ⚠️ **No ejecutes el baseline sobre una BD que ya tiene datos**: la tabla
 > `facturas` no se recrea, pero sí reemplazaría funciones, políticas RLS y
@@ -53,6 +53,9 @@ Conserva todos los datos: facturas, clientes, productos, kardex y usuarios.
 11. Con **New query**, pega `migrations/20261006_018_exportaciones_auditoria.sql`
     y **Run** (amplía la whitelist de `auditoria_registrar` con las
     exportaciones de inventario y de reportes).
+12. Con **New query**, pega `migrations/20261007_019_facturas_compra.sql`
+    y **Run** (tabla `facturas_compra`, RLS de sólo admin y whitelist
+    de auditoría con los códigos `COMPRA_*`).
 
 Todas son **idempotentes**: si las ejecutas dos veces no pasa nada.
 
@@ -126,6 +129,23 @@ registrados. Puedes comentarlo si prefieres no modificar datos.
 | **`20261002_016_superadmin_guardas.sql`** | **`is_admin()` reconoce `superadmin`, policy que aísla la fila superadmin, trigger `trg_proteger_superadmin`, whitelist de `auditoria_registrar` y promoción de la cuenta autorizada** |
 | **`20261002_017_confirmar_factura_superadmin.sql`** | **`confirmar_factura()` acepta el rol `superadmin`** |
 | **`20261006_018_exportaciones_auditoria.sql`** | **Whitelist de `auditoria_registrar` + `EXPORTACION_INVENTARIO` y `EXPORTACION_REPORTE`** |
+| **`20261007_019_facturas_compra.sql`** | **Tabla `facturas_compra` (facturas de proveedor), RLS de sólo admin, 3 índices y whitelist `COMPRA_*` / `EXPORTACION_COMPRA`** |
+
+### Módulo Compras (019)
+
+Registro contable de las facturas que la empresa recibe de sus proveedores:
+empresa, número, concepto, valor, fecha de recibida, fecha de pago, estado
+(`pendiente` / `parcial` / `pagada` / `anulada`) y notas.
+
+- **No toca inventario**: no escribe en `productos`, `movimientos_stock` ni
+  `precio_costo`. Las entradas de mercancía siguen por el kardex.
+- **RLS de sólo admin/superadmin** en las 4 operaciones: un vendedor no
+  puede ni leerlas por PostgREST.
+- **Auditoría por RPC** (no por trigger): `COMPRA_CREADA`,
+  `COMPRA_MODIFICADA`, `COMPRA_ELIMINADA` y `EXPORTACION_COMPRA`, escritas
+  desde `src/app/actions/facturas-compra.ts`.
+- **Dashboard**: `getDashboardStats()` devuelve el bloque `compras`
+  (pendiente de pago, facturas por pagar y vencidas a 30 días).
 
 Las 11 primeras son el **historial**. En una BD nueva no se ejecutan: el
 baseline ya incluye todo su contenido en su versión corregida (incluida la
@@ -141,7 +161,7 @@ policy de `items_factura` que corrige 013 y el bloque 11 = auditoría de 014).
 |---|---|---|
 | `public.auditoria_eventos` | tabla | Fila por evento; **inmutable** (trigger `BEFORE UPDATE OR DELETE` lanza excepción, sin policies de escritura, `REVOKE` a los roles de la app) |
 | `public.auditoria_trigger()` | triggers en `productos`, `clientes`, `facturas`, `movimientos_stock`, `usuarios`, `negocio` | Escribe el evento con OLD/NEW exactos en **cada escritura**, venga de la app o de una consulta directa |
-| `public.auditoria_registrar(...)` | RPC | Única vía de la app y sólo para eventos sin fila en una tabla: `LOGIN`, `LOGIN_FALLIDO`, `LOGOUT`, `USUARIO_CREADO`, `USUARIO_MODIFICADO` (cambio de contraseña), `USUARIO_ELIMINADO`, `EXPORTACION_AUDITORIA`, `EXPORTACION_INVENTARIO`, `EXPORTACION_REPORTE` |
+| `public.auditoria_registrar(...)` | RPC | Única vía de la app y sólo para eventos sin fila en una tabla: `LOGIN`, `LOGIN_FALLIDO`, `LOGOUT`, `USUARIO_CREADO`, `USUARIO_MODIFICADO` (cambio de contraseña), `USUARIO_ELIMINADO`, `EXPORTACION_AUDITORIA`, `EXPORTACION_INVENTARIO`, `EXPORTACION_REPORTE`, `COMPRA_CREADA`, `COMPRA_MODIFICADA`, `COMPRA_ELIMINADA`, `EXPORTACION_COMPRA` |
 | `public.auditoria_registrar_ip(...)` | RPC | Guarda la IP de la sesión en `usuarios.ultima_ip` para que los triggers la incluyan |
 | `puede_ver_auditoria()` / `puede_exportar_auditoria()` | helpers RLS | Admin siempre; el resto según `usuarios.puede_ver_auditoria` / `usuarios.puede_exportar_auditoria` |
 | `src/lib/audit.ts` | app | `auditService.log()`: nunca lanza excepciones, un fallo de auditoría no rompe el negocio |
@@ -174,8 +194,8 @@ Comprobación: `scripts/verificar-auditoria.sql` (ejecutar en el SQL Editor).
 
 ## Cómo se aplican las migraciones
 
-Las migraciones 012–018 **ya están registradas en el historial de la BD**
-(la 018 se aplicó el 2026-10-07). Para una BD existente nueva se siguen los
+Las migraciones 012–019 **ya están registradas en el historial de la BD**
+(la 019 se aplicó el 2026-10-08). Para una BD existente nueva se siguen los
 pasos de la opción B: se pegan en el SQL Editor en orden. No hay
 `supabase/config.toml`, así que **no** existe `supabase db push`; si algún día
 se quiere vincular el CLI, ejecuta `supabase init` revisando que no pise los

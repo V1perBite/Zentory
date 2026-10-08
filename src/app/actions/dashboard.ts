@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin, requireProfile } from "@/lib/auth";
+import { DIAS_COMPRA_VENCIDA } from "@/lib/constants";
 import { startOfDay, startOfWeek, startOfMonth, subDays, subMonths, endOfDay, subWeeks } from "date-fns";
 
 export type DateRangeKey = "hoy" | "ultimos_7_dias" | "ultimos_30_dias" | "este_mes" | "mes_anterior";
@@ -174,14 +175,53 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     (p) => p.stock_actual <= p.minimo_stock,
   );
 
+  // Cuentas por pagar (módulo Compras). Es un saldo actual, no depende del
+  // rango seleccionado: lo que queda por pagar es "lo que se debe hoy".
+  const { data: comprasPendientes } = await supabase
+    .from("facturas_compra")
+    .select("id, empresa, numero_factura, valor, fecha_recibida, fecha_pago, estado")
+    .in("estado", ["pendiente", "parcial"])
+    .order("fecha_recibida", { ascending: true })
+    .limit(500);
+
+  const limite = subDays(new Date(), DIAS_COMPRA_VENCIDA);
+  const pendientes = comprasPendientes ?? [];
+  const pendientePago = pendientes.reduce(
+    (sum, c) => sum + Number(c.valor ?? 0),
+    0,
+  );
+  const vencidas = pendientes.filter(
+    (c) => new Date(`${c.fecha_recibida}T00:00:00`) < limite,
+  );
+
+  const compras = {
+    pendientePago,
+    pendientesCount: pendientes.length,
+    vencidasCount: vencidas.length,
+    diasVencida: DIAS_COMPRA_VENCIDA,
+    porPagar: pendientes.slice(0, 5).map((c) => ({
+      id: c.id,
+      empresa: c.empresa,
+      numero_factura: c.numero_factura as string | null,
+      valor: Number(c.valor ?? 0),
+      fecha_recibida: c.fecha_recibida as string,
+      dias: Math.round(
+        (Date.now() - new Date(`${c.fecha_recibida}T00:00:00`).getTime()) /
+          86400000,
+      ),
+    })),
+  };
+
   return {
     metrics: { ventas, ganancia, facturas: numFacturas, prevVentas, prevGanancia },
     chartData,
     topProductos,
     estadosCount,
+    compras,
     alertas: {
       lowStockCount: bajosStock.length,
-      lowStockNames: bajosStock.slice(0, 3).map((p) => p.nombre).join(", ")
+      lowStockNames: bajosStock.slice(0, 3).map((p) => p.nombre).join(", "),
+      comprasVencidasCount: compras.vencidasCount,
     }
   };
 }
