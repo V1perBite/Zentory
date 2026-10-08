@@ -17,6 +17,7 @@ import {
 } from "@/app/actions/facturas-compra";
 import { ExportCsvButton } from "@/components/ui/export-csv-button";
 import { NumberField } from "@/components/ui/number-field";
+import { PageHeader } from "@/components/page-header";
 import {
   Search,
   Plus,
@@ -239,7 +240,16 @@ export function ComprasClient({ filas, empresas }: Props) {
     ESTADO_COMPRA_BADGE[estado] ?? "bg-slate-100 text-slate-600";
 
   return (
-    <>
+    <div className="space-y-4">
+      <PageHeader
+        title="Compras"
+        subtitle="Facturas de proveedor, pagos y pendientes del negocio."
+        icon={
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+            <Receipt className="h-5 w-5" />
+          </span>
+        }
+      />
       {success ? (
         <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>
       ) : null}
@@ -606,6 +616,6 @@ export function ComprasClient({ filas, empresas }: Props) {
           </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }

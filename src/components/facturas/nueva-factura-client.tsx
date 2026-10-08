@@ -8,6 +8,7 @@ import { TIPO_DESCUENTO } from "@/lib/constants";
 import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
 import { ClienteAutocomplete } from "@/components/facturas/cliente-autocomplete";
+import { PageHeader } from "@/components/page-header";
 import { Trash2, Printer, Save, ShoppingCart, Search, PackageSearch, Tag, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { isAdminRole } from "@/lib/permissions";
@@ -503,7 +504,23 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
   );
 
   return (
-    <div className="flex flex-col lg:h-[calc(100vh-8rem)] lg:flex-row lg:gap-6">
+    <div className="space-y-4">
+      <PageHeader
+        title="Nueva venta"
+        subtitle="Punto de pago"
+        actions={
+          <button
+            type="button"
+            onClick={() => setShowCatalogModal(true)}
+            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lift-sm transition-all active:scale-95 lg:hidden"
+          >
+            <PackageSearch className="h-4 w-4" />
+            Catálogo
+          </button>
+        }
+      />
+
+      <div className="flex flex-col lg:h-[calc(100vh-8rem)] lg:flex-row lg:gap-6">
       {/* Desktop: Catálogo Izquierda */}
       <div className="hidden lg:flex lg:w-[55%] flex-col bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
         <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
@@ -511,7 +528,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
             <PackageSearch className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-slate-900">Catálogo de productos</h1>
+            <h2 className="text-lg font-bold text-slate-900">Catálogo de productos</h2>
             <p className="text-xs font-medium text-slate-500">Busca o escanea SKU para agregar al carrito</p>
           </div>
         </div>
@@ -522,20 +539,6 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
 
       {/* Desktop & Mobile: Carrito (Derecha o Full) */}
       <div className="flex flex-col lg:flex-1 lg:min-h-0 lg:w-[45%]">
-        <div className="lg:hidden mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-slate-900">Nueva Venta</h1>
-            <p className="text-xs font-medium text-slate-500">Punto de pago</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowCatalogModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm active:bg-indigo-700 active:scale-95 transition-all"
-          >
-            <PackageSearch className="h-4 w-4" />
-            Catálogo
-          </button>
-        </div>
         {invoicePanel}
       </div>
 
@@ -575,6 +578,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
           <div className="flex-1 overflow-y-auto p-4">{catalogGrid}</div>
         </div>
       ) : null}
+      </div>
     </div>
   );
 }

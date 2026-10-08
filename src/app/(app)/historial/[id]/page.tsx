@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Ticket } from "@/components/printing/ticket";
+import { PageHeader } from "@/components/page-header";
 import type { FacturaConDetalle, Negocio } from "@/lib/types";
 
 type HistorialDetailPageProps = {
@@ -45,10 +46,12 @@ export default async function HistorialDetailPage({ params }: HistorialDetailPag
 
   return (
     <section className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Detalle de factura #{factura.numero_factura}</h1>
-        <p className="text-sm text-slate-600">Vista de solo lectura.</p>
-      </div>
+      <PageHeader
+        back="/historial"
+        backLabel="Volver al historial de facturas"
+        title={`Detalle de factura #${factura.numero_factura}`}
+        subtitle="Vista de solo lectura."
+      />
 
       <div className="rounded-xl border border-slate-200 bg-white p-4">
         <Ticket factura={factura} negocio={negocio} />

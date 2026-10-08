@@ -15,22 +15,136 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  LogOut,
   Store,
   BarChart3,
   ShieldCheck,
-  Receipt
+  Receipt,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SignOutButton } from "@/components/signout-button";
 import type { Usuario } from "@/lib/types";
 import { PERMISOS } from "@/lib/constants";
 import { hasPermission, isAdmin } from "@/lib/permissions";
 import { sincronizarIp } from "@/app/actions/auditoria";
+import { cn } from "@/lib/utils";
+
+type NavLink = { href: string; label: string; icon: React.ElementType };
 
 type AppShellProps = {
   profile: Usuario;
   children: React.ReactNode;
 };
+
+function BrandMark({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lift-sm",
+        className ?? "h-10 w-10",
+      )}
+    >
+      <Store className="h-5 w-5" />
+    </span>
+  );
+}
+
+function NavItem({
+  link,
+  active,
+  collapsed,
+  onClick,
+}: {
+  link: NavLink;
+  active: boolean;
+  collapsed?: boolean;
+  onClick?: () => void;
+}) {
+  const Icon = link.icon;
+
+  const content = (
+    <Link
+      href={link.href}
+      aria-current={active ? "page" : undefined}
+      onClick={onClick}
+      title={collapsed ? link.label : undefined}
+      className={cn(
+        "group relative flex items-center rounded-xl text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        collapsed ? "h-11 w-11 justify-center" : "gap-3 px-3 py-2.5",
+        active
+          ? "bg-accent text-accent-foreground shadow-soft"
+          : "text-muted-foreground hover:bg-accent/60 hover:text-foreground",
+      )}
+    >
+      {active ? (
+        <span
+          aria-hidden
+          className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-primary"
+        />
+      ) : null}
+      <Icon
+        className={cn(
+          "shrink-0 transition-colors",
+          collapsed ? "h-5 w-5" : "h-[18px] w-[18px]",
+          active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+        )}
+      />
+      {!collapsed && <span className="truncate">{link.label}</span>}
+    </Link>
+  );
+
+  if (!collapsed) return content;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent side="right">{link.label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function NavList({
+  links,
+  pathname,
+  collapsed,
+  onNavigate,
+}: {
+  links: NavLink[];
+  pathname: string;
+  collapsed?: boolean;
+  onNavigate?: () => void;
+}) {
+  return (
+    <ul className="flex list-none flex-col gap-1">
+      {links.map((link) => (
+        <li key={link.href}>
+          <NavItem
+            link={link}
+            active={
+              pathname === link.href || pathname.startsWith(`${link.href}/`)
+            }
+            collapsed={collapsed}
+            onClick={onNavigate}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 export function AppShell({ profile, children }: AppShellProps) {
   const pathname = usePathname();
@@ -43,181 +157,179 @@ export function AppShell({ profile, children }: AppShellProps) {
     void sincronizarIp();
   }, []);
 
-  const vendedorLinks = [
+  const vendedorLinks: NavLink[] = [
     { href: "/facturas", label: "Facturas", icon: FileText },
     { href: "/historial", label: "Historial", icon: History },
     { href: "/inventario", label: "Inventario", icon: Package },
   ];
 
-  const links =
-    isAdmin(profile)
-      ? [
-          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-          { href: "/inventario", label: "Inventario", icon: Package },
-          { href: "/facturas", label: "Facturas", icon: FileText },
-          { href: "/compras", label: "Compras", icon: Receipt },
-          { href: "/reportes", label: "Reportes", icon: BarChart3 },
-          { href: "/historial", label: "Historial", icon: History },
-          { href: "/imprimir", label: "Imprimir", icon: Printer },
-          { href: "/admin/negocio", label: "Negocio", icon: Settings },
-          { href: "/admin/usuarios", label: "Usuarios", icon: Users },
-        ]
-      : vendedorLinks;
+  const links: NavLink[] = isAdmin(profile)
+    ? [
+        { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+        { href: "/inventario", label: "Inventario", icon: Package },
+        { href: "/facturas", label: "Facturas", icon: FileText },
+        { href: "/compras", label: "Compras", icon: Receipt },
+        { href: "/reportes", label: "Reportes", icon: BarChart3 },
+        { href: "/historial", label: "Historial", icon: History },
+        { href: "/imprimir", label: "Imprimir", icon: Printer },
+        { href: "/admin/negocio", label: "Negocio", icon: Settings },
+        { href: "/admin/usuarios", label: "Usuarios", icon: Users },
+      ]
+    : vendedorLinks;
 
   if (hasPermission(profile, PERMISOS.AUDITORIA_VER)) {
     links.push({ href: "/auditoria", label: "Auditoría", icon: ShieldCheck });
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="lg:hidden sticky top-0 z-20 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 shadow-sm">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
-            <Store className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-base font-bold text-slate-900 leading-tight">Zentory</p>
-            <p className="text-xs font-medium text-slate-500">
-              {profile.nombre}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => setMobileOpen(true)}
-          className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 active:bg-slate-100"
+    <TooltipProvider delayDuration={150}>
+      <div className="min-h-screen bg-background">
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-primary-foreground focus:shadow-lift"
         >
-          <Menu className="h-6 w-6" />
-        </button>
-      </div>
+          Saltar al contenido
+        </a>
 
-      {mobileOpen ? (
-        <div className="fixed inset-0 z-30 lg:hidden flex">
-          <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex h-full w-[80%] max-w-sm flex-col bg-white shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-slate-100 p-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
-                  <Store className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="text-base font-bold text-slate-900">Zentory</p>
-                  <p className="text-xs font-medium text-slate-500">{profile.rol}</p>
-                </div>
-              </div>
-              <button 
-                type="button" 
-                onClick={() => setMobileOpen(false)} 
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600"
+        <header className="sticky top-0 z-30 border-b border-border bg-card/90 px-3 py-2.5 backdrop-blur supports-[backdrop-filter]:bg-card/75 lg:hidden">
+          <div className="flex items-center justify-between gap-3">
+            <Link
+              href={isAdmin(profile) ? "/dashboard" : "/facturas"}
+              className="flex min-w-0 items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              <BrandMark className="h-9 w-9" />
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-bold leading-tight">
+                  Zentory
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {profile.nombre}
+                </span>
+              </span>
+            </Link>
+
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Abrir menú">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="flex w-[86%] max-w-xs flex-col gap-0 border-r p-0 shadow-lift [&>button.absolute]:hidden"
               >
-                <X className="h-5 w-5" />
-              </button>
+                <SheetHeader className="border-b border-border p-4 text-left">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <BrandMark className="h-9 w-9" />
+                      <div className="min-w-0">
+                        <SheetTitle className="truncate text-base">
+                          Zentory
+                        </SheetTitle>
+                        <SheetDescription className="truncate text-xs">
+                          {profile.nombre} · {profile.rol}
+                        </SheetDescription>
+                      </div>
+                    </div>
+                    <SheetClose asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Cerrar menú"
+                        className="shrink-0"
+                      >
+                        <X className="h-5 w-5" />
+                      </Button>
+                    </SheetClose>
+                  </div>
+                </SheetHeader>
+
+                <nav
+                  aria-label="Navegación principal"
+                  className="custom-scrollbar flex-1 overflow-y-auto p-3"
+                >
+                  <NavList
+                    links={links}
+                    pathname={pathname}
+                    onNavigate={() => setMobileOpen(false)}
+                  />
+                </nav>
+
+                <div className="border-t border-border p-3">
+                  <SignOutButton />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+        </header>
+
+        <div className="mx-auto flex w-full max-w-[1400px] gap-4 px-3 py-4 sm:px-4 lg:gap-6 lg:px-6 lg:py-6">
+          <aside
+            aria-label="Navegación lateral"
+            className={cn(
+              "sticky top-6 hidden h-[calc(100vh-3rem)] shrink-0 flex-col rounded-2xl border border-border bg-card p-3 shadow-soft transition-all duration-300 lg:flex",
+              collapsed ? "w-[76px]" : "w-64",
+            )}
+          >
+            <div className="mb-4 flex items-center justify-between gap-2 px-1">
+              {collapsed ? (
+                <BrandMark className="mx-auto h-10 w-10" />
+              ) : (
+                <>
+                  <div className="flex min-w-0 items-center gap-3">
+                    <BrandMark />
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-bold leading-tight">
+                        Zentory
+                      </p>
+                      <p className="truncate text-xs font-medium text-muted-foreground">
+                        {profile.nombre}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCollapsed(true)}
+                    aria-label="Contraer menú"
+                    className="h-8 w-8 shrink-0 text-muted-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
             </div>
 
-            <nav className="flex-1 space-y-2 overflow-y-auto p-4">
-              {links.map((link) => {
-                const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-base font-medium transition-colors ${
-                      active 
-                        ? "bg-indigo-50 text-indigo-700" 
-                        : "text-slate-600 active:bg-slate-100"
-                    }`}
-                  >
-                    <Icon className={`h-5 w-5 ${active ? "text-indigo-600" : "text-slate-400"}`} />
-                    {link.label}
-                  </Link>
-                );
-              })}
+            {collapsed ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setCollapsed(false)}
+                aria-label="Expandir menú"
+                className="mx-auto mb-3 h-9 w-9"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            ) : null}
+
+            <nav aria-label="Navegación principal" className="min-h-0 flex-1 overflow-y-auto custom-scrollbar">
+              <NavList links={links} pathname={pathname} collapsed={collapsed} />
             </nav>
 
-            <div className="border-t border-slate-100 p-4">
-              <SignOutButton />
+            <div className="mt-3 border-t border-border pt-3">
+              <SignOutButton collapsed={collapsed} />
             </div>
           </aside>
+
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="min-w-0 flex-1 outline-none"
+          >
+            {children}
+          </main>
         </div>
-      ) : null}
-
-      <div className="mx-auto flex w-full max-w-[1400px] gap-4 px-2 py-4 lg:px-6 lg:py-6">
-        <aside className={`hidden lg:flex lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)] lg:flex-col lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white lg:p-4 lg:shadow-sm transition-all duration-300 ${collapsed ? "lg:w-24" : "lg:w-64"}`}>
-          <div className="mb-6 flex items-center justify-between">
-            {!collapsed ? (
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
-                  <Store className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="truncate text-base font-bold text-slate-900">Zentory</p>
-                  <p className="truncate text-xs font-medium text-slate-500">
-                    {profile.nombre}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-sm">
-                <Store className="h-5 w-5" />
-              </div>
-            )}
-            
-            {!collapsed && (
-              <button 
-                type="button" 
-                onClick={() => setCollapsed(true)} 
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-
-          <nav className="space-y-1.5 flex-1">
-            {collapsed && (
-              <button 
-                type="button" 
-                onClick={() => setCollapsed(false)} 
-                className="mx-auto mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200"
-                title="Expandir menú"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            )}
-            {links.map((link) => {
-              const active = pathname === link.href || pathname.startsWith(`${link.href}/`);
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  title={collapsed ? link.label : undefined}
-                  className={`group flex items-center rounded-xl transition-all ${
-                    collapsed ? "justify-center h-12 w-12 mx-auto" : "gap-3 px-3 py-2.5"
-                  } ${
-                    active 
-                      ? "bg-indigo-50 text-indigo-700" 
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                  }`}
-                >
-                  <Icon className={`shrink-0 ${collapsed ? "h-6 w-6" : "h-5 w-5"} ${
-                    active ? "text-indigo-600" : "text-slate-400 group-hover:text-slate-600"
-                  }`} />
-                  {!collapsed && <span className="text-sm font-medium">{link.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-
-          <div className="mt-auto pt-4 border-t border-slate-100">
-            <SignOutButton collapsed={collapsed} />
-          </div>
-        </aside>
-
-        <main className="min-w-0 flex-1">{children}</main>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
