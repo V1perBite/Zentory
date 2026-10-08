@@ -2,13 +2,117 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --ticket-width: 72mm;
-}
+@layer base {
+  :root {
+    --ticket-width: 72mm;
 
-body {
-  @apply bg-slate-50 text-slate-900;
-  -webkit-tap-highlight-color: transparent;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 245 58% 51%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 226 100% 97%;
+    --accent-foreground: 245 58% 51%;
+
+    --destructive: 0 84% 59%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 243 75% 59%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 243 75% 59%;
+    --chart-2: 139 94% 30%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 350 89% 60%;
+    --chart-5: 217 92% 60%;
+
+    --sidebar: 0 0% 100%;
+    --sidebar-foreground: 215 16% 47%;
+    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 226 100% 97%;
+    --sidebar-accent-foreground: 245 58% 51%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 243 75% 59%;
+  }
+
+  .dark {
+    --ticket-width: 72mm;
+
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 13%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 243 75% 66%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217 33% 20%;
+    --secondary-foreground: 226 100% 87%;
+
+    --muted: 217 33% 20%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 243 60% 24%;
+    --accent-foreground: 226 100% 93%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 33% 24%;
+    --input: 217 33% 24%;
+    --ring: 243 75% 66%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 243 75% 66%;
+    --chart-2: 139 80% 44%;
+    --chart-3: 38 92% 55%;
+    --chart-4: 350 85% 65%;
+    --chart-5: 217 91% 65%;
+
+    --sidebar: 222 47% 13%;
+    --sidebar-foreground: 215 20% 65%;
+    --sidebar-primary: 243 75% 66%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 243 60% 24%;
+    --sidebar-accent-foreground: 226 100% 93%;
+    --sidebar-border: 217 33% 24%;
+    --sidebar-ring: 243 75% 66%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 @layer utilities {
@@ -18,6 +122,26 @@ body {
 
   .ticket-width {
     width: var(--ticket-width);
+  }
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .stagger-1 {
+    animation-delay: 60ms;
+  }
+  .stagger-2 {
+    animation-delay: 120ms;
+  }
+  .stagger-3 {
+    animation-delay: 180ms;
+  }
+  .stagger-4 {
+    animation-delay: 240ms;
+  }
+  .stagger-5 {
+    animation-delay: 300ms;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
@@ -45,6 +169,18 @@ body {
   100% {
     opacity: 0;
     transform: translate(-50%, calc(-50% - 120px)) scale(0.5);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
