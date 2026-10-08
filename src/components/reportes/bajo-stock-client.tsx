@@ -6,6 +6,8 @@ import { formatCOP } from "@/lib/invoice-calculations";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type ProductoBajoStock = {
   id: string;
@@ -15,6 +17,15 @@ type ProductoBajoStock = {
   minimo_stock: number;
   precio_costo: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["producto", "nombre"],
+  ["sku", "sku_code"],
+  ["stock_actual", "stock_actual"],
+  ["stock_minimo", "minimo_stock"],
+  ["deficit", "deficit"],
+  ["inversion_estimada", "inversion"],
+];
 
 export function BajoStockClient() {
   const supabase = createClient();
@@ -62,12 +73,30 @@ export function BajoStockClient() {
           <p className="text-xs text-slate-500 mt-1">Comparando el stock actual con el mínimo configurado</p>
         </div>
         
-        <Link 
-          href="/inventario"
-          className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition-colors self-start"
-        >
-          Gestionar Inventario
-        </Link>
+        <div className="flex items-center gap-2 self-start">
+          <Link
+            href="/inventario"
+            className="rounded bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition-colors"
+          >
+            Gestionar Inventario
+          </Link>
+          <ExportCsvButton
+            filename="bajo-stock"
+            auditar="bajo-stock"
+            onExport={() => ({
+              csv: aCsv(
+                data.map((item) => ({
+                  ...item,
+                  deficit: Math.max(0, item.minimo_stock - item.stock_actual),
+                  inversion:
+                    Math.max(0, item.minimo_stock - item.stock_actual) *
+                    item.precio_costo,
+                })),
+                COLUMNAS,
+              ),
+            })}
+          />
+        </div>
       </div>
 
       <div className="w-full">

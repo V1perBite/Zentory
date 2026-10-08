@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type ProductoRentabilidad = {
   nombre: string;
@@ -14,6 +16,15 @@ type ProductoRentabilidad = {
   utilidad: number;
   margen: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["producto", "nombre"],
+  ["unidades", "unidades"],
+  ["ingresos", "ingresos"],
+  ["costos", "costos"],
+  ["utilidad", "utilidad"],
+  ["margen_%", "margen"],
+];
 
 export function RentabilidadClient() {
   const supabase = createClient();
@@ -117,6 +128,11 @@ export function RentabilidadClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`rentabilidad-${fechaInicio}_${fechaFin}`}
+            auditar="rentabilidad"
+            onExport={() => ({ csv: aCsv(sortedData, COLUMNAS) })}
           />
         </div>
       </div>

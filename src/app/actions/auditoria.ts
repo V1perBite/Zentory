@@ -2,10 +2,11 @@
 
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { hasPermission, requireProfile } from "@/lib/auth";
+import { hasPermission, isAdmin, requireProfile } from "@/lib/auth";
 import { PERMISOS } from "@/lib/constants";
 import { auditService, type AuditInput } from "@/lib/audit";
 import { construirQueryAuditoria } from "@/lib/auditoria-query";
+import { aCsv, marcaArchivo } from "@/lib/csv";
 import type { AuditoriaFiltros } from "@/lib/types";
 
 const MAX_EXPORTAR = 5000;
@@ -52,38 +53,52 @@ export async function sincronizarIp(): Promise<void> {
   }
 }
 
-function escalar(valor: unknown): string {
-  if (valor === null || valor === undefined) return "";
-  if (typeof valor === "object") return JSON.stringify(valor);
-  return String(valor);
-}
+/**
+ * Deja constancia de la exportación de un reporte. Los reportes se arman
+ * en el navegador, así que éste es el único punto donde queda registro.
+ */
+export async function registrarExportacionReporte(
+  reporte: string,
+  total: number,
+): Promise<{ error?: string }> {
+  try {
+    const profile = await requireProfile();
+    if (!isAdmin(profile)) return { error: "Sin permisos." };
 
-function aCsv(filas: Record<string, unknown>[]): string {
-  const columnas = [
-    ["fecha", "created_at"],
-    ["usuario", "usuario_nombre"],
-    ["email", "usuario_email"],
-    ["accion", "accion"],
-    ["modulo", "modulo"],
-    ["entidad", "entidad"],
-    ["referencia", "entidad_ref"],
-    ["descripcion", "descripcion"],
-    ["ip", "ip"],
-    ["motivo", "motivo"],
-    ["valor_anterior", "valores_previos"],
-    ["valor_nuevo", "valores_nuevos"],
-  ] as const;
-
-  const celda = (v: string) => `"${v.replace(/"/g, '""')}"`;
-  const lineas = [columnas.map(([titulo]) => celda(titulo)).join(",")];
-
-  for (const fila of filas) {
-    lineas.push(columnas.map(([, key]) => celda(escalar(fila[key]))).join(","));
+    const supabase = createClient();
+    await auditService.log(
+      {
+        action: "EXPORTACION_REPORTE",
+        module: "SISTEMA",
+        entityType: "USUARIO",
+        entityId: profile.id,
+        entityRef: profile.email,
+        description: `Exportación del reporte ${reporte} (${total} filas)`,
+        metadata: { reporte, total },
+        ip: ipActual(),
+      },
+      supabase,
+    );
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : "Error de auditoría" };
   }
-
-  // BOM para que Excel abra los acentos correctamente
-  return `\uFEFF${lineas.join("\r\n")}`;
 }
+
+const COLUMNAS_AUDITORIA = [
+  ["fecha", "created_at"],
+  ["usuario", "usuario_nombre"],
+  ["email", "usuario_email"],
+  ["accion", "accion"],
+  ["modulo", "modulo"],
+  ["entidad", "entidad"],
+  ["referencia", "entidad_ref"],
+  ["descripcion", "descripcion"],
+  ["ip", "ip"],
+  ["motivo", "motivo"],
+  ["valor_anterior", "valores_previos"],
+  ["valor_nuevo", "valores_nuevos"],
+] as const;
 
 /**
  * Exporta los eventos filtrados a CSV. Requiere auditoria.exportar
@@ -119,6 +134,9 @@ export async function exportarAuditoriaCSV(
     supabase,
   );
 
-  const marca = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
-  return { csv: aCsv(filas), filename: `auditoria-${marca}.csv` };
+  const marca = marcaArchivo();
+  return {
+    csv: aCsv(filas, COLUMNAS_AUDITORIA),
+    filename: `auditoria-${marca}.csv`,
+  };
 }

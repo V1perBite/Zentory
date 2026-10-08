@@ -6,6 +6,8 @@ import { format, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { FileText, Receipt, TrendingUp, Users } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type FacturaCorte = {
   id: string;
@@ -14,6 +16,13 @@ type FacturaCorte = {
   created_at: string;
   vendedor: { nombre: string } | { nombre: string }[];
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["fecha", "created_at"],
+  ["n_factura", "numero_factura"],
+  ["total", "total"],
+  ["vendedor", "vendedor"],
+];
 
 export function CorteCajaClient() {
   const supabase = createClient();
@@ -76,14 +85,32 @@ export function CorteCajaClient() {
   return (
     <div className="space-y-6">
       <ReporteError mensaje={errorMsg} />
-      <div className="flex items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-max">
-        <label htmlFor="fecha-corte" className="text-sm font-medium text-slate-700">Seleccionar Día:</label>
+      <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm w-max">
+        <label htmlFor="fecha-corte" className="text-sm font-medium text-slate-700">Seleccionar D��a:</label>
         <input
           id="fecha-corte"
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
           className="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-slate-50"
+        />
+        <ExportCsvButton
+          filename={`corte-caja-${fecha}`}
+          auditar="corte-caja"
+          onExport={() => ({
+            csv: aCsv(
+              data.map((f) => {
+                const v = Array.isArray(f.vendedor) ? f.vendedor[0] : f.vendedor;
+                return {
+                  created_at: f.created_at,
+                  numero_factura: f.numero_factura,
+                  total: f.total,
+                  vendedor: v?.nombre ?? "-",
+                };
+              }),
+              COLUMNAS,
+            ),
+          })}
         />
       </div>
 

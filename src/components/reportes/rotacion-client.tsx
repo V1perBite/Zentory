@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { RefreshCw } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type ProductoRotacion = {
   id: string;
@@ -13,6 +15,13 @@ type ProductoRotacion = {
   unidades_vendidas: number;
   indice_rotacion: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["producto", "nombre"],
+  ["stock_actual", "stock_actual"],
+  ["unidades_vendidas", "unidades_vendidas"],
+  ["indice_rotacion", "indice_rotacion"],
+];
 
 export function RotacionClient() {
   const supabase = createClient();
@@ -130,6 +139,11 @@ export function RotacionClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`rotacion-${fechaInicio}_${fechaFin}`}
+            auditar="rotacion"
+            onExport={() => ({ csv: aCsv(sortedData, COLUMNAS) })}
           />
         </div>
       </div>

@@ -6,6 +6,8 @@ import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { FileMinus } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type Merma = {
   id: string;
@@ -17,6 +19,15 @@ type Merma = {
   created_at: string;
   perdida_total: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["fecha", "created_at"],
+  ["producto", "nombre_producto"],
+  ["cantidad", "cantidad"],
+  ["motivo", "motivo"],
+  ["costo_unitario", "costo_unitario"],
+  ["perdida_total", "perdida_total"],
+];
 
 export function MermasClient() {
   const supabase = createClient();
@@ -107,6 +118,11 @@ export function MermasClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`mermas-${fechaInicio}_${fechaFin}`}
+            auditar="mermas"
+            onExport={() => ({ csv: aCsv(data, COLUMNAS) })}
           />
         </div>
       </div>

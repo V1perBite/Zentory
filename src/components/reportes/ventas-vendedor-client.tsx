@@ -15,6 +15,8 @@ import {
   Cell
 } from "recharts";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type VendedorRendimiento = {
   nombre: string;
@@ -22,6 +24,13 @@ type VendedorRendimiento = {
   totalVendido: number;
   promedio: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["vendedor", "nombre"],
+  ["facturas", "facturas"],
+  ["total_vendido", "totalVendido"],
+  ["promedio", "promedio"],
+];
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316'];
 
@@ -112,6 +121,11 @@ export function VentasVendedorClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`ventas-vendedor-${fechaInicio}_${fechaFin}`}
+            auditar="ventas-vendedor"
+            onExport={() => ({ csv: aCsv(sortedData, COLUMNAS) })}
           />
         </div>
       </div>

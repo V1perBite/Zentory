@@ -17,12 +17,19 @@ import {
 } from "recharts";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type Factura = {
   id: string;
   total: number;
   created_at: string;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["fecha", "date"],
+  ["ventas", "total"],
+];
 
 export function VentasPeriodoClient() {
   const supabase = createClient();
@@ -106,6 +113,11 @@ export function VentasPeriodoClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`ventas-periodo-${fechaInicio}_${fechaFin}`}
+            auditar="ventas-periodo"
+            onExport={() => ({ csv: aCsv(chartData, COLUMNAS) })}
           />
         </div>
       </div>

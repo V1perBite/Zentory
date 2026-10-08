@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { PackageOpen, DollarSign } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 import {
   PieChart,
   Pie,
@@ -24,6 +26,14 @@ type ProductoValoracion = {
 };
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899', '#84cc16', '#14b8a6'];
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["producto", "nombre"],
+  ["sku", "sku_code"],
+  ["stock_actual", "stock_actual"],
+  ["precio_costo", "precio_costo"],
+  ["valor_total", "valor_total"],
+];
 
 export function ValoracionInventarioClient() {
   const supabase = createClient();
@@ -79,6 +89,13 @@ export function ValoracionInventarioClient() {
   return (
     <div className="space-y-6">
       <ReporteError mensaje={errorMsg} />
+      <div className="flex justify-end">
+        <ExportCsvButton
+          filename="valoracion-inventario"
+          auditar="valoracion-inventario"
+          onExport={() => ({ csv: aCsv(data, COLUMNAS) })}
+        />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col">
           <div className="flex items-center gap-3 mb-3 text-emerald-700">

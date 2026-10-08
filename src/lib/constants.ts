@@ -102,6 +102,9 @@ export const ACCIONES_AUDITORIA: Record<string, string> = {
   CONFIGURACION_CREADA: "Configuración creada",
   CONFIGURACION_MODIFICADA: "Configuración modificada",
   CONFIGURACION_ELIMINADA: "Configuración eliminada",
+  // Exportaciones
+  EXPORTACION_INVENTARIO: "Exportación de inventario",
+  EXPORTACION_REPORTE: "Exportación de reporte",
   // Sistema
   EXPORTACION_AUDITORIA: "Exportación de auditoría",
 };

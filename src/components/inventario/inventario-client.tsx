@@ -7,6 +7,8 @@ import { formatCOP } from "@/lib/invoice-calculations";
 import { KardexModal } from "@/components/inventario/kardex-modal";
 import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { exportarInventarioCSV } from "@/app/actions/inventario-export";
 import { Search, Edit2, Archive, Trash2, Package, Tag, TrendingUp, AlertTriangle } from "lucide-react";
 
 type ProductoRow = {
@@ -14,7 +16,8 @@ type ProductoRow = {
   nombre: string;
   sku_code: string;
   precio_venta: number;
-  precio_costo: number;
+  /** `null` cuando el usuario no es admin: el servidor no lo envía. */
+  precio_costo: number | null;
   stock_actual: number;
   minimo_stock: number;
   activo: boolean;
@@ -55,7 +58,7 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
   const [success, setSuccess] = useState<string | null>(null);
 
   const openEdit = (p: ProductoRow) => {
-    const pc = Number(p.precio_costo);
+    const pc = Number(p.precio_costo ?? 0);
     const pv = Number(p.precio_venta);
     setEditModal(p);
     setEditNombre(p.nombre);
@@ -142,7 +145,7 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
     <>
       {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <SkuInput
           value={search}
           onChange={setSearch}
@@ -150,6 +153,12 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
           placeholder="Buscar por nombre o SKU..."
           className="w-full sm:max-w-md"
         />
+        {isAdmin ? (
+          <ExportCsvButton
+            filename="inventario"
+            onExport={exportarInventarioCSV}
+          />
+        ) : null}
       </div>
 
       {/* Vista Móvil (Tarjetas) */}
@@ -249,8 +258,8 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
           {filtered.map((p) => {
               const low = p.stock_actual <= p.minimo_stock;
               const utilidad =
-                Number(p.precio_costo) > 0
-                  ? `${(((Number(p.precio_venta) - Number(p.precio_costo)) / Number(p.precio_costo)) * 100).toFixed(1)}%`
+                Number(p.precio_costo ?? 0) > 0
+                  ? `${(((Number(p.precio_venta) - Number(p.precio_costo ?? 0)) / Number(p.precio_costo ?? 0)) * 100).toFixed(1)}%`
                   : "-";
               return (
                 <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">

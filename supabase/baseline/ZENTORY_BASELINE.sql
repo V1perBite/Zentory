@@ -1293,7 +1293,8 @@ begin
 
   if upper(p_accion) not in (
     'LOGIN', 'LOGOUT', 'LOGIN_FALLIDO', 'USUARIO_CREADO',
-    'USUARIO_MODIFICADO', 'USUARIO_ELIMINADO', 'EXPORTACION_AUDITORIA'
+    'USUARIO_MODIFICADO', 'USUARIO_ELIMINADO',
+    'EXPORTACION_AUDITORIA', 'EXPORTACION_INVENTARIO', 'EXPORTACION_REPORTE'
   ) then
     raise exception 'Auditoría: acción % registrada por trigger, no por RPC', p_accion;
   end if;

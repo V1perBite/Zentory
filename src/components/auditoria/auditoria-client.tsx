@@ -10,6 +10,7 @@ import {
   MODULO_LABEL,
 } from "@/lib/constants";
 import { formatoFechaAuditoria } from "@/lib/auditoria-format";
+import { descargarCsv } from "@/lib/csv";
 import type { AuditoriaEvento, AuditoriaFiltros } from "@/lib/types";
 
 type Props = {
@@ -73,15 +74,7 @@ export function AuditoriaClient({
       return;
     }
 
-    const blob = new Blob([res.csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = res.filename ?? "auditoria.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+    descargarCsv(res.filename ?? "auditoria.csv", res.csv);
   };
 
   return (

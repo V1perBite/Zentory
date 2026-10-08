@@ -15,12 +15,20 @@ import {
 } from "recharts";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type ProductoAgrupado = {
   nombre: string;
   unidades: number;
   ingresos: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["producto", "nombre"],
+  ["unidades", "unidades"],
+  ["ingresos", "ingresos"],
+];
 
 export function ProductosTopClient() {
   const supabase = createClient();
@@ -117,6 +125,11 @@ export function ProductosTopClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`productos-top-${fechaInicio}_${fechaFin}`}
+            auditar="productos-top"
+            onExport={() => ({ csv: aCsv(chartData, COLUMNAS) })}
           />
         </div>
       </div>

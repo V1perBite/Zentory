@@ -6,6 +6,8 @@ import { format, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { History, Search } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type Cliente = {
   id: string;
@@ -26,6 +28,13 @@ type FacturaHistorial = {
     };
   }[];
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["fecha", "created_at"],
+  ["n_factura", "numero_factura"],
+  ["total", "total"],
+  ["productos", "productos"],
+];
 
 export function HistorialClienteClient() {
   const supabase = createClient();
@@ -158,6 +167,27 @@ export function HistorialClienteClient() {
         <div className="p-5 border-b border-slate-200 flex items-center gap-2">
           <History className="h-5 w-5 text-teal-600" />
           <h3 className="text-base font-semibold text-slate-900">Historial de Compras</h3>
+          <div className="ml-auto">
+            <ExportCsvButton
+              filename={`historial-cliente-${
+                clientes.find((c) => c.id === clienteSeleccionado)?.nombre ?? "cliente"
+              }`}
+              auditar="historial-cliente"
+              onExport={() => ({
+                csv: aCsv(
+                  facturas.map((factura) => ({
+                    created_at: factura.created_at,
+                    numero_factura: factura.numero_factura,
+                    total: factura.total,
+                    productos: factura.items
+                      .map((i) => `${i.producto?.nombre ?? "-"} x${i.cantidad}`)
+                      .join(" | "),
+                  })),
+                  COLUMNAS,
+                ),
+              })}
+            />
+          </div>
         </div>
         
         {loadingHistorial ? (

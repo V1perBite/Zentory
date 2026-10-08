@@ -6,6 +6,8 @@ import { format, subDays, startOfDay, endOfDay, parseISO } from "date-fns";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { Star } from "lucide-react";
 import { ReporteError } from "./reporte-error";
+import { ExportCsvButton } from "@/components/ui/export-csv-button";
+import { aCsv, type ColumnaCsv } from "@/lib/csv";
 
 type ClienteRendimiento = {
   id: string;
@@ -14,6 +16,13 @@ type ClienteRendimiento = {
   facturas: number;
   totalComprado: number;
 };
+
+const COLUMNAS: readonly ColumnaCsv[] = [
+  ["cliente", "nombre"],
+  ["identificacion", "identificacion"],
+  ["facturas", "facturas"],
+  ["total_comprado", "totalComprado"],
+];
 
 export function MejoresClientesClient() {
   const supabase = createClient();
@@ -106,6 +115,11 @@ export function MejoresClientesClient() {
             value={fechaFin}
             onChange={(e) => setFechaFin(e.target.value)}
             className="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
+          <ExportCsvButton
+            filename={`mejores-clientes-${fechaInicio}_${fechaFin}`}
+            auditar="mejores-clientes"
+            onExport={() => ({ csv: aCsv(sortedData, COLUMNAS) })}
           />
         </div>
       </div>

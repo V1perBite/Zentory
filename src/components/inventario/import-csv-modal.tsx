@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { descargarCsv } from "@/lib/csv";
 
 type ParsedProducto = {
   nombre: string;
@@ -51,21 +52,48 @@ const COL_ALIASES: Record<string, keyof ParsedProducto> = {
   min: "minimo_stock",
 };
 
+/** Parte una línea CSV respetando los campos entre comillas dobles. */
+function partirLinea(linea: string, delim: string): string[] {
+  const campos: string[] = [];
+  let actual = "";
+  let dentro = false;
+
+  for (let i = 0; i < linea.length; i++) {
+    const c = linea[i];
+    if (dentro) {
+      if (c === '"') {
+        if (linea[i + 1] === '"') { actual += '"'; i++; }
+        else { dentro = false; }
+      } else {
+        actual += c;
+      }
+    } else if (c === '"') {
+      dentro = true;
+    } else if (c === delim) {
+      campos.push(actual);
+      actual = "";
+    } else {
+      actual += c;
+    }
+  }
+
+  campos.push(actual);
+  return campos;
+}
+
 function parseCsv(text: string): ParsedProducto[] {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return [];
 
   const delimiter = lines[0].includes(";") ? ";" : ",";
-  const rawHeaders = lines[0].split(delimiter).map((h) =>
-    h.trim().replace(/^["']|["']$/g, "").toLowerCase(),
+  const rawHeaders = partirLinea(lines[0], delimiter).map((h) =>
+    h.trim().toLowerCase(),
   );
 
   const mapped = rawHeaders.map((h) => COL_ALIASES[h] ?? null);
 
   return lines.slice(1).filter((l) => l.trim()).map((line) => {
-    const values = line.split(delimiter).map((v) =>
-      v.trim().replace(/^["']|["']$/g, ""),
-    );
+    const values = partirLinea(line, delimiter).map((v) => v.trim());
     const row: Partial<ParsedProducto> = {};
     mapped.forEach((field, i) => {
       if (!field) return;
@@ -166,15 +194,10 @@ export function ImportCsvModal({ onClose }: ImportCsvModalProps) {
   };
 
   const downloadTemplate = () => {
-    const blob = new Blob([TEMPLATE_HEADERS + "\n" + TEMPLATE_EXAMPLE], {
-      type: "text/csv;charset=utf-8;",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "plantilla_productos.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    descargarCsv(
+      "plantilla_productos.csv",
+      TEMPLATE_HEADERS + "\n" + TEMPLATE_EXAMPLE,
+    );
   };
 
   return (

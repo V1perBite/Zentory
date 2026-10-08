@@ -31,6 +31,7 @@
 | `auth.admin.createUser` | email + password + metadata (usa **service role**) | `actions/admin-usuarios.ts` |
 | `negocio_mensajes` | `delete` + `insert` de los mensajes del ticket | `admin/negocio-form.tsx:96-107` |
 | Login | email + contraseña (Supabase Auth) | `auth/login-form.tsx` |
+| `auditoria_registrar(...)` | `EXPORTACION_INVENTARIO` / `EXPORTACION_REPORTE` + código de reporte, total de filas, usuario, IP | `actions/inventario-export.ts`, `actions/auditoria.ts:registrarExportacionReporte` |
 
 **No se envía nunca:** precios de venta, costos, subtotales calculados, stock ni número de
 factura — todo eso se decide en el servidor.
@@ -46,7 +47,7 @@ factura — todo eso se decide en el servidor.
 | `/facturas/nueva` | `productos` (límite 500), `clientes` (autocomplete, límite 6) | Catálogo completo si hay ≤ 500 productos |
 | `/imprimir` | `facturas` + `clientes` + `usuarios` + `items_factura` + `productos` + `negocio` | Filtro `estado = pendiente_impresion`, límite 100 |
 | `/historial` | `facturas` + `items_factura` | **Límite 200** (trunca silenciosamente) |
-| `/inventario` | `productos`, `movimientos_stock` | **Límite 200**; el kardex depende de `movimientos_stock` |
+| `/inventario` | `productos`, `movimientos_stock` | **Límite 200**; el kardex depende de `movimientos_stock`. **`precio_costo` no viaja en las props si el usuario no es admin** (`page.tsx:67`) |
 | `/reportes` (11 subreportes) | `facturas`, `items_factura`, `productos`, `clientes`, `movimientos_stock` | **Sin `limit()`** en ninguno → PostgREST corta en `db.max_rows` (1000) |
 | `/admin/reportes` | igual que arriba | Duplicado funcional del hub `/reportes` |
 | `/admin/usuarios` | `usuarios` | lista completa |
@@ -89,7 +90,7 @@ Esto queda **documentado, no modificado** en esta fase (decisión del proyecto):
 2. **Vendedor lee facturas anuladas a nivel API** — la migración 011 declaró querer impedirlo y se revirtió (commit `2745248`); la UI lo redirige pero la BD no lo bloquea.
 3. **Usuario desactivado mantiene lecturas** — `requireProfile()` solo redirige, no cierra sesión; la mayoría de políticas no comprueban `usuarios.activo`.
 4. **Bypass del middleware** — `lib/supabase/middleware.ts:9` salta la autenticación si la petición trae cabecera `next-action`.
-5. **`getDashboardStats()` no llama `requireProfile()`** (`actions/dashboard.ts:52`).
+5. **`auditoria_registrar()` es `SECURITY DEFINER` ejecutable por `anon`** — el aviso del linter de Supabase es real: cualquier request sin sesión puede insertar `LOGIN_FALLIDO` (el resto de acciones la rechaza). Se tolera porque el formulario de login necesita registrar el fallo antes de autenticarse.
 6. **Autocomplete sin escapar** — `cliente-autocomplete.tsx:63` construye un `.or()` con el input crudo (una coma en el nombre rompe el filtro).
 7. **`negocio-form.tsx:96-112`** hace `delete` + `insert` sin transacción: si falla el insert se pierden los mensajes.
 
@@ -112,6 +113,6 @@ Esto queda **documentado, no modificado** en esta fase (decisión del proyecto):
 | Situación | Archivo a ejecutar |
 |---|---|
 | Base de datos **nueva** (recién creada) | `supabase/baseline/ZENTORY_BASELINE.sql` — una sola vez |
-| Base de datos **existente** (la actual) | `supabase/migrations/20260925_012_reparacion_critica.sql` — idempotente |
+| Base de datos **existente** (la actual) | `supabase/migrations/` del **012 al 018**, en orden, cada uno una vez (idempotentes) |
 
 Detalle e instrucciones en `supabase/README.md`.
