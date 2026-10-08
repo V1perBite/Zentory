@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin, requireProfile } from "@/lib/auth";
 import { DIAS_COMPRA_VENCIDA } from "@/lib/constants";
-import { startOfDay, startOfWeek, startOfMonth, subDays, subMonths, endOfDay, subWeeks } from "date-fns";
+import { startOfDay, startOfMonth, subDays, subMonths, endOfDay } from "date-fns";
 
 export type DateRangeKey = "hoy" | "ultimos_7_dias" | "ultimos_30_dias" | "este_mes" | "mes_anterior";
 
@@ -145,12 +145,12 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     .gte("created_at", start.toISOString())
     .lte("created_at", end.toISOString());
 
-  const estadosCount = { pagadas: 0, pendientes: 0, vencidas: 0, anuladas: 0 };
+  const estadosCount = { impresas: 0, pendientes: 0, anuladas: 0 };
   if (allFacturas) {
     allFacturas.forEach(f => {
       if (f.estado === "anulada") estadosCount.anuladas++;
-      else if (f.estado === "pendiente_impresion") estadosCount.pendientes++; // Ajusta según tu lógica real de "pendiente" vs "pagada"
-      else estadosCount.pagadas++; 
+      else if (f.estado === "pendiente_impresion") estadosCount.pendientes++;
+      else estadosCount.impresas++;
     });
   }
 
@@ -164,16 +164,17 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
   });
   const chartData = Object.keys(chartDataMap).map(k => ({ time: k, ventas: chartDataMap[k] }));
 
-  // Productos con bajo stock (Alertas) — misma definición que
+  // Productos con stock bajo o crítico — misma definición que
   // /reportes/bajo-stock: stock_actual <= minimo_stock
   const { data: productosActivos } = await supabase
     .from("productos")
-    .select("nombre, stock_actual, minimo_stock")
+    .select("id, nombre, stock_actual, minimo_stock")
     .eq("activo", true);
 
-  const bajosStock = (productosActivos ?? []).filter(
-    (p) => p.stock_actual <= p.minimo_stock,
-  );
+  const bajosStock = (productosActivos ?? [])
+    .filter((p) => p.stock_actual <= p.minimo_stock)
+    .sort((a, b) => a.stock_actual - b.stock_actual)
+    .slice(0, 6);
 
   // Cuentas por pagar (módulo Compras). Es un saldo actual, no depende del
   // rango seleccionado: lo que queda por pagar es "lo que se debe hoy".
@@ -184,20 +185,15 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     .order("fecha_recibida", { ascending: true })
     .limit(500);
 
-  const limite = subDays(new Date(), DIAS_COMPRA_VENCIDA);
   const pendientes = comprasPendientes ?? [];
   const pendientePago = pendientes.reduce(
     (sum, c) => sum + Number(c.valor ?? 0),
     0,
   );
-  const vencidas = pendientes.filter(
-    (c) => new Date(`${c.fecha_recibida}T00:00:00`) < limite,
-  );
 
   const compras = {
     pendientePago,
     pendientesCount: pendientes.length,
-    vencidasCount: vencidas.length,
     diasVencida: DIAS_COMPRA_VENCIDA,
     porPagar: pendientes.slice(0, 5).map((c) => ({
       id: c.id,
@@ -217,11 +213,12 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     chartData,
     topProductos,
     estadosCount,
+    bajoStock: bajosStock.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      stock: p.stock_actual,
+      minimo: p.minimo_stock,
+    })),
     compras,
-    alertas: {
-      lowStockCount: bajosStock.length,
-      lowStockNames: bajosStock.slice(0, 3).map((p) => p.nombre).join(", "),
-      comprasVencidasCount: compras.vencidasCount,
-    }
   };
 }

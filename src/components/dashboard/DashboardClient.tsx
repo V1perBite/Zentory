@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   LineChart,
@@ -15,27 +15,13 @@ import {
   Legend,
 } from "recharts";
 import {
-  Download,
-  FileText,
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  Info,
   Loader2,
   Receipt
 } from "lucide-react";
 import { getDashboardStats, type DateRangeKey } from "@/app/actions/dashboard";
-
-const heatmapDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
-const heatmapHours = ["08-12", "12-16", "16-20", "20-24"];
-
-function getIntensityClass(value: number) {
-  if (value > 80) return "bg-blue-600 text-white";
-  if (value > 60) return "bg-blue-400 text-white";
-  if (value > 40) return "bg-blue-300 text-slate-800";
-  if (value > 20) return "bg-blue-200 text-slate-800";
-  return "bg-slate-100 text-slate-400";
-}
 
 export default function DashboardClient() {
   const [dateRange, setDateRange] = useState<DateRangeKey>("ultimos_7_dias");
@@ -67,13 +53,13 @@ export default function DashboardClient() {
     );
   }
 
-  const { metrics, chartData, topProductos, estadosCount, compras, alertas } = data || {
+  const { metrics, chartData, topProductos, estadosCount, bajoStock, compras } = data || {
     metrics: { ventas: 0, ganancia: 0, facturas: 0, prevVentas: 0, prevGanancia: 0 },
-    chartData: [], topProductos: [], estadosCount: { pagadas: 0, pendientes: 0, vencidas: 0, anuladas: 0 },
+    chartData: [], topProductos: [], estadosCount: { impresas: 0, pendientes: 0, anuladas: 0 },
+    bajoStock: [] as Array<{ id: string; nombre: string; stock: number; minimo: number }>,
     compras: {
       pendientePago: 0,
       pendientesCount: 0,
-      vencidasCount: 0,
       diasVencida: 30,
       porPagar: [] as Array<{
         id: string;
@@ -84,7 +70,6 @@ export default function DashboardClient() {
         dias: number;
       }>,
     },
-    alertas: { lowStockCount: 0, lowStockNames: "", comprasVencidasCount: 0 }
   };
 
   const margen = metrics.ventas > 0 ? ((metrics.ganancia / metrics.ventas) * 100).toFixed(1) : "0.0";
@@ -98,30 +83,21 @@ export default function DashboardClient() {
   const comparativaVentas = getComparativa(metrics.ventas, metrics.prevVentas);
   const comparativaGanancia = getComparativa(metrics.ganancia, metrics.prevGanancia);
 
-  const rentabilidadData = [
-    { name: "Rentabilidad", ventas: metrics.ventas, costos: metrics.ventas - metrics.ganancia, ganancia: metrics.ganancia }
+  const comparativaData = [
+    { name: "Ventas", actual: metrics.ventas, anterior: metrics.prevVentas },
+    { name: "Ganancia", actual: metrics.ganancia, anterior: metrics.prevGanancia },
   ];
 
-  const totalFacturas = estadosCount.pagadas + estadosCount.pendientes + estadosCount.vencidas + estadosCount.anuladas;
+  const totalFacturas = estadosCount.impresas + estadosCount.pendientes + estadosCount.anuladas;
   const getPercent = (count: number) => totalFacturas > 0 ? Math.round((count / totalFacturas) * 100) : 0;
 
   return (
     <div className="space-y-6">
-      {/* Header y Acciones de Exportación */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Dashboard de Facturación y Ventas</h1>
           <p className="text-sm text-slate-500">Panel analítico de rendimiento comercial en tiempo real</p>
-        </div>
-        <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors">
-            <Download size={16} />
-            <span className="hidden sm:inline">Exportar Vista</span>
-          </button>
-          <button className="flex items-center gap-2 px-3 py-2 text-sm font-medium bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors">
-            <FileText size={16} />
-            <span className="hidden sm:inline">Reporte Ventas</span>
-          </button>
         </div>
       </div>
 
@@ -140,12 +116,6 @@ export default function DashboardClient() {
             <option value="ultimos_30_dias">Últimos 30 días</option>
             <option value="este_mes">Este mes</option>
             <option value="mes_anterior">Mes anterior</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1.5 w-full sm:w-auto">
-          <label className="text-xs font-semibold text-slate-500 uppercase">Sucursal (Opcional)</label>
-          <select className="border-slate-200 rounded-md text-sm py-2 px-3 bg-slate-50" disabled>
-            <option value="">Todas</option>
           </select>
         </div>
         {loading && <div className="text-sm text-blue-600 flex items-center gap-2"><Loader2 className="animate-spin" size={16} /> Actualizando...</div>}
@@ -206,9 +176,9 @@ export default function DashboardClient() {
         </div>
       </div>
 
-      {/* Análisis Gráfico y Rentabilidad */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-2">
+      {/* Análisis Gráfico */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
           <h3 className="text-base font-semibold text-slate-800 mb-4">Evolución de Ventas (Periodo)</h3>
           <div className="h-72 w-full">
             {chartData.length > 0 ? (
@@ -230,103 +200,77 @@ export default function DashboardClient() {
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-1 flex flex-col">
-          <h3 className="text-base font-semibold text-slate-800 mb-4">Desglose de Rentabilidad</h3>
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+            <h3 className="text-base font-semibold text-slate-800">Comparativa vs Periodo Anterior</h3>
+            <div className="flex items-center gap-3 text-xs font-medium">
+              <span className={comparativaVentas >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                Ventas {comparativaVentas >= 0 ? "+" : "−"}{Math.abs(comparativaVentas).toFixed(1)}%
+              </span>
+              <span className={comparativaGanancia >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                Ganancia {comparativaGanancia >= 0 ? "+" : "−"}{Math.abs(comparativaGanancia).toFixed(1)}%
+              </span>
+            </div>
+          </div>
           <div className="h-72 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={rentabilidadData} margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>
+              <BarChart data={comparativaData} margin={{ top: 5, right: 0, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 12, fill: '#64748b' }} axisLine={false} tickLine={false} tickFormatter={(val) => `$${val}`} />
-                <Tooltip formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]} cursor={{ fill: 'transparent' }} />
+                <Tooltip formatter={(value: any) => [formatCurrency(Number(value) || 0), ""]} cursor={{ fill: 'rgba(148, 163, 184, 0.12)' }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
-                <Bar dataKey="ventas" name="Ventas" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={40} />
-                <Bar dataKey="costos" name="Costos" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={40} />
-                <Bar dataKey="ganancia" name="Ganancia" fill="#10b981" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="actual" name="Periodo actual" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={34} />
+                <Bar dataKey="anterior" name="Periodo anterior" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={34} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
       </div>
 
-      {/* Rendimiento Productos y Horarios */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
-          <h3 className="text-base font-semibold text-slate-800 mb-4">Top Productos Más Vendidos</h3>
-          {topProductos.length > 0 ? (
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="pb-3 text-sm font-semibold text-slate-500">Producto</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Unidades</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Total Ventas</th>
-                  <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Ganancia</th>
+      {/* Rendimiento Productos */}
+      <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <h3 className="text-base font-semibold text-slate-800 mb-4">Top Productos Más Vendidos</h3>
+        {topProductos.length > 0 ? (
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100">
+                <th className="pb-3 text-sm font-semibold text-slate-500">Producto</th>
+                <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Unidades</th>
+                <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Total Ventas</th>
+                <th className="pb-3 text-sm font-semibold text-slate-500 text-right">Ganancia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topProductos.map((p: any) => (
+                <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
+                  <td className="py-3 text-sm font-medium text-slate-800">{p.nombre}</td>
+                  <td className="py-3 text-sm text-slate-600 text-right">{p.unidades}</td>
+                  <td className="py-3 text-sm font-medium text-slate-800 text-right">{formatCurrency(p.ventas)}</td>
+                  <td className="py-3 text-sm font-medium text-emerald-600 text-right">{formatCurrency(p.ganancia)}</td>
                 </tr>
-              </thead>
-              <tbody>
-                {topProductos.map((p: any) => (
-                  <tr key={p.id} className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors">
-                    <td className="py-3 text-sm font-medium text-slate-800">{p.nombre}</td>
-                    <td className="py-3 text-sm text-slate-600 text-right">{p.unidades}</td>
-                    <td className="py-3 text-sm font-medium text-slate-800 text-right">{formatCurrency(p.ventas)}</td>
-                    <td className="py-3 text-sm font-medium text-emerald-600 text-right">{formatCurrency(p.ganancia)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <div className="text-sm text-slate-500 text-center py-8">No hay ventas registradas.</div>
-          )}
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm opacity-50 relative">
-          <h3 className="text-base font-semibold text-slate-800 mb-4">Días y Horarios de Mayor Venta (Pronto)</h3>
-          <div className="grid grid-cols-[auto_repeat(4,1fr)] gap-1 text-center text-xs blur-[2px]">
-            {/* Headers */}
-            <div className="p-2"></div>
-            {heatmapHours.map(h => <div key={h} className="p-2 font-medium text-slate-500">{h}</div>)}
-            
-            {/* Grid simulada visual */}
-            {heatmapDays.map((day) => (
-              <React.Fragment key={day}>
-                <div className="p-2 font-medium text-slate-500 text-right flex items-center justify-end">{day}</div>
-                {heatmapHours.map((hour) => {
-                  return (
-                    <div 
-                      key={`${day}-${hour}`} 
-                      className={`p-2 rounded-md min-h-[32px] flex items-center justify-center transition-colors bg-slate-100`}
-                    >
-                    </div>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="bg-white/80 px-4 py-2 rounded-lg font-medium text-slate-700 shadow-sm border border-slate-200">En desarrollo...</span>
-          </div>
-        </div>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="text-sm text-slate-500 text-center py-8">No hay ventas registradas.</div>
+        )}
       </div>
 
-      {/* Operaciones y Alertas */}
+      {/* Operaciones */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
           <h3 className="text-base font-semibold text-slate-800 mb-4">Estado de Facturación</h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 flex-1 content-center">
+          <div className="grid grid-cols-3 gap-4 flex-1 content-center">
             <div className="flex flex-col items-center justify-center p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-              <span className="text-2xl font-bold text-emerald-600">{getPercent(estadosCount.pagadas)}%</span>
-              <span className="text-xs font-medium text-emerald-800 uppercase mt-1">Pagadas</span>
-              <span className="text-[10px] text-emerald-600 mt-0.5">{estadosCount.pagadas} facturas</span>
+              <span className="text-2xl font-bold text-emerald-600">{getPercent(estadosCount.impresas)}%</span>
+              <span className="text-xs font-medium text-emerald-800 uppercase mt-1">Impresas</span>
+              <span className="text-[10px] text-emerald-600 mt-0.5">{estadosCount.impresas} facturas</span>
             </div>
             <div className="flex flex-col items-center justify-center p-4 bg-amber-50 rounded-lg border border-amber-100">
               <span className="text-2xl font-bold text-amber-600">{getPercent(estadosCount.pendientes)}%</span>
               <span className="text-xs font-medium text-amber-800 uppercase mt-1">Pendientes</span>
               <span className="text-[10px] text-amber-600 mt-0.5">{estadosCount.pendientes} facturas</span>
-            </div>
-            <div className="flex flex-col items-center justify-center p-4 bg-rose-50 rounded-lg border border-rose-100">
-              <span className="text-2xl font-bold text-rose-600">{getPercent(estadosCount.vencidas)}%</span>
-              <span className="text-xs font-medium text-rose-800 uppercase mt-1">Vencidas</span>
-              <span className="text-[10px] text-rose-600 mt-0.5">{estadosCount.vencidas} facturas</span>
             </div>
             <div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-lg border border-slate-200">
               <span className="text-2xl font-bold text-slate-600">{getPercent(estadosCount.anuladas)}%</span>
@@ -381,39 +325,42 @@ export default function DashboardClient() {
           )}
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-800 mb-4">Alertas del Sistema</h3>
-          <div className="space-y-3">
-            {alertas.lowStockCount > 0 && (
-              <div className="flex gap-3 items-start p-3 bg-rose-50 border border-rose-100 rounded-lg">
-                <AlertTriangle className="text-rose-600 shrink-0 mt-0.5" size={18} />
-                <div>
-                  <p className="text-sm font-semibold text-rose-800">Inventario Crítico</p>
-                  <p className="text-xs text-rose-600 mt-0.5">Hay {alertas.lowStockCount} productos con stock bajo o crítico. ({alertas.lowStockNames}{alertas.lowStockCount > 3 ? '...' : ''})</p>
-                </div>
-              </div>
-            )}
-
-            {alertas.comprasVencidasCount > 0 && (
-              <div className="flex gap-3 items-start p-3 bg-orange-50 border border-orange-100 rounded-lg">
-                <AlertTriangle className="text-orange-600 shrink-0 mt-0.5" size={18} />
-                <div>
-                  <p className="text-sm font-semibold text-orange-800">Compras sin pagar hace {compras.diasVencida}+ días</p>
-                  <p className="text-xs text-orange-700 mt-0.5">
-                    {alertas.comprasVencidasCount} factura{alertas.comprasVencidasCount === 1 ? "" : "s"} de compra superan los {compras.diasVencida} días desde que se recibieron.
-                  </p>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex gap-3 items-start p-3 bg-blue-50 border border-blue-100 rounded-lg">
-              <Info className="text-blue-600 shrink-0 mt-0.5" size={18} />
-              <div>
-                <p className="text-sm font-semibold text-blue-800">Resumen de Facturas</p>
-                <p className="text-xs text-blue-700 mt-0.5">Se han emitido {metrics.facturas} facturas válidas en este periodo seleccionado.</p>
-              </div>
-            </div>
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-800">
+              <AlertTriangle size={18} className="text-rose-600" />
+              Stock Crítico
+            </h3>
+            <Link href="/reportes/bajo-stock" className="text-xs font-semibold text-rose-700 hover:text-rose-800 underline">
+              Ver reporte
+            </Link>
           </div>
+          {bajoStock.length > 0 ? (
+            <ul className="space-y-2 flex-1">
+              {bajoStock.map((p: { id: string; nombre: string; stock: number; minimo: number }) => {
+                const agotado = p.stock <= 0;
+                const pct = Math.max(4, Math.round((p.stock / Math.max(p.minimo, 1)) * 100));
+                return (
+                  <li key={p.id} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-semibold text-slate-800">{p.nombre}</p>
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${agotado ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"}`}>
+                        {agotado ? "Sin stock" : `${p.stock} / ${p.minimo}`}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full rounded-full bg-slate-200">
+                      <div className={`h-1.5 rounded-full ${agotado ? "bg-rose-500" : "bg-amber-500"}`} style={{ width: `${agotado ? 100 : pct}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">
+              <p className="text-sm font-medium text-slate-600">Todo en orden</p>
+              <p className="mt-1 text-xs text-slate-500">Ningún producto está por debajo de su mínimo.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
