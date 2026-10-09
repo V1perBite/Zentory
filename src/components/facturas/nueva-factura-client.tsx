@@ -9,7 +9,9 @@ import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
 import { ClienteAutocomplete } from "@/components/facturas/cliente-autocomplete";
 import { PageHeader } from "@/components/page-header";
-import { Trash2, Printer, Save, ShoppingCart, Search, PackageSearch, Tag, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Trash2, Printer, Save, ShoppingCart, PackageSearch, Tag, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { isAdminRole } from "@/lib/permissions";
 
@@ -218,7 +220,26 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
   };
 
   if (!hasHydrated) {
-    return <p className="text-sm text-slate-600">Cargando...</p>;
+    return (
+      <div className="space-y-4">
+        <PageHeader title="Nueva venta" subtitle="Punto de pago" />
+        <div className="flex flex-col gap-6 lg:flex-row">
+          <div className="hidden flex-1 flex-col gap-3 lg:flex">
+            <Skeleton className="h-10 w-56" />
+            <div className="grid grid-cols-3 gap-3">
+              {Array.from({ length: 9 }).map((_, i) => (
+                <Skeleton key={i} className="h-28 rounded-2xl" />
+              ))}
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col gap-4">
+            <Skeleton className="h-40 rounded-2xl" />
+            <Skeleton className="h-64 rounded-2xl" />
+            <Skeleton className="h-32 rounded-2xl" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const catalogGrid = (
@@ -233,13 +254,13 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
             className="w-full shadow-sm"
           />
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => fetchProductoBySkuOrAdd(skuSearch)}
-          className="flex items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-bold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all"
+          className="rounded-xl px-4 font-bold"
         >
           Añadir
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-3">
@@ -256,17 +277,17 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
                 precioUnitario: Number(p.precio_venta),
               });
             }}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all hover:border-indigo-300 hover:shadow-md active:scale-95"
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-border bg-card p-3 text-left shadow-soft transition-all hover:border-primary/40 hover:shadow-lift active:scale-95"
           >
             <div className="mb-2">
-              <p className="line-clamp-2 text-xs font-bold leading-tight text-slate-900 group-hover:text-indigo-700">{p.nombre}</p>
-              <div className="mt-1.5 flex items-center gap-1 text-[10px] font-medium text-slate-500">
+              <p className="line-clamp-2 text-xs font-bold leading-tight text-foreground group-hover:text-primary">{p.nombre}</p>
+              <div className="mt-1.5 flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
                 <Tag className="h-3 w-3" />
                 <span className="truncate">{p.sku_code}</span>
               </div>
             </div>
-            <div className="mt-auto border-t border-slate-100 pt-2">
-              <p className="text-sm font-bold text-indigo-700">{formatCOP(Number(p.precio_venta))}</p>
+            <div className="mt-auto border-t border-border/60 pt-2">
+              <p className="text-sm font-bold text-primary">{formatCOP(Number(p.precio_venta))}</p>
               <p className={`mt-0.5 text-[10px] font-semibold uppercase tracking-wider ${p.stock_actual <= 0 ? "text-rose-600" : "text-emerald-600"}`}>
                 Stock: {p.stock_actual}
               </p>
@@ -274,8 +295,8 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
           </button>
         ))}
         {filteredProductos.length === 0 ? (
-          <div className="col-span-full py-12 text-center text-slate-400">
-            <PackageSearch className="mx-auto h-12 w-12 mb-3 text-slate-300" />
+          <div className="col-span-full py-12 text-center text-muted-foreground/70">
+            <PackageSearch className="mx-auto h-12 w-12 mb-3 text-muted-foreground/50" />
             <p className="text-sm font-medium">Sin resultados</p>
           </div>
         ) : null}
@@ -286,7 +307,10 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
   const invoicePanel = (
     <div className="flex flex-col gap-4 lg:h-full">
       {success ? (
-        <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+        <div
+          role="status"
+          className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
+        >
           <p>{success}</p>
           {ultimaFactura ? (
             <div className="mt-2 flex flex-wrap gap-4 text-xs font-semibold">
@@ -308,10 +332,17 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
           ) : null}
         </div>
       ) : null}
-      {error ? <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 border border-rose-100">{error}</p> : null}
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+        >
+          {error}
+        </p>
+      ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Datos del cliente</p>
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Datos del cliente</p>
         <ClienteAutocomplete
           onSelect={handleSelectCliente}
           nombre={clienteNombre}
@@ -331,7 +362,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
 
       <div className="space-y-3 pb-48 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pb-0">
         <div className="flex items-center justify-between">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Carrito de Compra ({items.length})
           </p>
           {items.length > 0 && (
@@ -348,13 +379,13 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
         {items.length > 0 ? (
           <div className="space-y-3">
             {items.map((item: any) => (
-              <div key={item.productoId} className="relative rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-all hover:border-slate-300">
+              <div key={item.productoId} className="relative rounded-2xl border border-border bg-card p-3 shadow-soft transition-all hover:border-input">
                 <div className="pr-8">
-                  <h4 className="font-bold text-slate-900 leading-tight">{item.nombre}</h4>
-                  <div className="mt-1 flex items-center gap-2 text-xs font-medium text-slate-500">
+                  <h4 className="font-bold text-foreground leading-tight">{item.nombre}</h4>
+                  <div className="mt-1 flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <Tag className="h-3 w-3" />
                     <span>{item.skuCode}</span>
-                    <span className="text-slate-300">•</span>
+                    <span className="text-muted-foreground/50">•</span>
                     <span>{formatCOP(item.precioUnitario)} c/u</span>
                   </div>
                 </div>
@@ -362,50 +393,50 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
                 <button
                   type="button"
                   onClick={() => removeItem(item.productoId)}
-                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                  className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground/70 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
 
-                <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-slate-100 pt-3">
+                <div className="mt-3 flex flex-wrap items-end justify-between gap-3 border-t border-border/60 pt-3">
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-500 uppercase">Cant.</span>
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">Cant.</span>
                       <NumberField
                         value={item.cantidad}
                         min={1}
                         onChange={(v) => updateItem(item.productoId, { cantidad: v })}
-                        className="w-16 rounded-xl border border-slate-300 px-2 py-1.5 text-center font-bold text-slate-900 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
+                        className="w-16 rounded-xl border border-input px-2 py-1.5 text-center font-bold text-foreground focus:border-ring focus:ring-1 focus:ring-ring outline-none"
                       />
                     </label>
 
-                    <div className="flex items-center gap-1 rounded-xl border border-slate-300 bg-white overflow-hidden focus-within:border-indigo-500 focus-within:ring-1 focus-within:ring-indigo-500">
+                    <div className="flex items-center gap-1 rounded-xl border border-input bg-card overflow-hidden focus-within:border-ring focus-within:ring-1 focus-within:ring-ring">
                       <div className="relative">
                         <select
                           value={item.tipoDescuentoItem}
                           onChange={(e) =>
                             updateItem(item.productoId, { tipoDescuentoItem: e.target.value as "porcentaje" | "valor" })
                           }
-                          className="appearance-none bg-slate-50 border-r border-slate-300 py-1.5 pl-2 pr-6 text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                          className="appearance-none bg-accent/60 border-r border-input py-1.5 pl-2 pr-6 text-xs font-semibold text-foreground outline-none cursor-pointer"
                         >
                           <option value={TIPO_DESCUENTO.VALOR}>$</option>
                           <option value={TIPO_DESCUENTO.PORCENTAJE}>%</option>
                         </select>
-                        <ChevronDown className="absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 pointer-events-none text-slate-400" />
+                        <ChevronDown className="absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 pointer-events-none text-muted-foreground/70" />
                       </div>
                       <NumberField
                         value={item.descuentoItem}
                         min={0}
                         onChange={(v) => updateItem(item.productoId, { descuentoItem: v })}
-                        className="w-16 px-2 py-1.5 text-right font-bold text-slate-900 outline-none placeholder:font-normal"
+                        className="w-16 px-2 py-1.5 text-right font-bold text-foreground outline-none placeholder:font-normal"
                         placeholder="Desc."
                       />
                     </div>
                   </div>
 
                   <div className="text-right ml-auto">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Subtotal</p>
-                    <p className="text-base font-bold text-indigo-700 leading-none mt-0.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Subtotal</p>
+                    <p className="text-base font-bold text-primary leading-none mt-0.5">
                       {formatCOP(
                         calcItemSubtotal({
                           productoId: item.productoId,
@@ -424,45 +455,45 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 py-12 px-4">
-            <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 text-indigo-200">
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-accent/40 py-12 px-4">
+            <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary/30">
               <ShoppingCart className="h-8 w-8" />
             </div>
-            <p className="text-center text-sm font-medium text-slate-500">
+            <p className="text-center text-sm font-medium text-muted-foreground">
               El carrito está vacío.<br />Agrega productos del catálogo o escanea.
             </p>
           </div>
         )}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Descuento Global</p>
+        <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Descuento Global</p>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <select
                 value={descuentoGlobalTipo}
                 onChange={(e) => setDescuentoGlobalTipo(e.target.value as "porcentaje" | "valor")}
-                className="w-full appearance-none rounded-xl border border-slate-300 bg-white py-2 pl-3 pr-8 text-sm font-semibold text-slate-700 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                className="w-full appearance-none rounded-xl border border-input bg-card py-2 pl-3 pr-8 text-sm font-semibold text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring cursor-pointer"
               >
                 <option value={TIPO_DESCUENTO.VALOR}>Valor $</option>
                 <option value={TIPO_DESCUENTO.PORCENTAJE}>Porcentaje %</option>
               </select>
-              <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none text-slate-400" />
+              <ChevronDown className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 pointer-events-none text-muted-foreground/70" />
             </div>
             <NumberField
               value={descuentoGlobalValor}
               min={0}
               onChange={setDescuentoGlobalValor}
-              className="w-1/2 rounded-xl border border-slate-300 px-3 py-2 text-right font-bold text-slate-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              className="w-1/2 rounded-xl border border-input px-3 py-2 text-right font-bold text-foreground outline-none focus:border-ring focus:ring-1 focus:ring-ring"
             />
           </div>
         </div>
       </div>
 
       {/* FIXED FOOTER (Mobile Sticky / Desktop Normal) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative lg:z-auto bg-white border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] lg:shadow-sm lg:border lg:rounded-2xl p-4 flex flex-col gap-3">
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:relative lg:z-auto bg-card border-t border-border shadow-[0_-4px_6px_-1px_rgba(15,23,42,0.06)] lg:shadow-sm lg:border lg:rounded-2xl p-4 flex flex-col gap-3">
         <div className="flex justify-between items-end">
           <div>
-            <div className="flex items-center gap-2 text-sm text-slate-500 font-medium mb-0.5">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground font-medium mb-0.5">
               <span>Subtotal:</span>
               <span>{formatCOP(totals.subtotal)}</span>
             </div>
@@ -472,32 +503,33 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
                 <span>-{formatCOP(totals.descuentoTotal)}</span>
               </div>
             )}
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mt-1">Total a cobrar</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mt-1">Total a cobrar</p>
           </div>
           <div className="text-right">
-            <span className="text-3xl font-black tracking-tight text-indigo-700">{formatCOP(totals.total)}</span>
+            <span className="text-3xl font-black tracking-tight text-primary">{formatCOP(totals.total)}</span>
           </div>
         </div>
 
         <div className="flex gap-2 pt-1">
-          <button
+          <Button
             type="button"
+            variant="outline"
             disabled={!items.length || loading}
             onClick={() => submitFactura(true)}
-            className="flex h-14 flex-[0.7] items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white font-bold text-slate-700 shadow-sm disabled:opacity-50 active:bg-slate-50"
+            className="h-14 flex-[0.7] rounded-xl font-bold shadow-soft"
           >
-            <Save className="h-5 w-5" />
+            <Save className="mr-2 h-5 w-5" />
             <span className="hidden sm:inline">Guardar</span>
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={!items.length || loading}
             onClick={() => submitFactura(false)}
-            className="flex h-14 flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 font-bold text-white shadow-sm disabled:opacity-50 hover:bg-indigo-700 active:scale-[0.98] transition-transform"
+            className="h-14 flex-1 rounded-xl font-bold shadow-soft"
           >
-            <Printer className="h-5 w-5" />
-            <span>{loading ? "Cobrando..." : "COBRAR E IMPRIMIR"}</span>
-          </button>
+            <Printer className="mr-2 h-5 w-5" />
+            <span>{loading ? "Cobrando…" : "COBRAR E IMPRIMIR"}</span>
+          </Button>
         </div>
       </div>
     </div>
@@ -509,27 +541,27 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
         title="Nueva venta"
         subtitle="Punto de pago"
         actions={
-          <button
+          <Button
             type="button"
             onClick={() => setShowCatalogModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow-lift-sm transition-all active:scale-95 lg:hidden"
+            className="rounded-xl shadow-soft lg:hidden"
           >
-            <PackageSearch className="h-4 w-4" />
+            <PackageSearch className="mr-2 h-4 w-4" />
             Catálogo
-          </button>
+          </Button>
         }
       />
 
       <div className="flex flex-col lg:h-[calc(100vh-8rem)] lg:flex-row lg:gap-6">
       {/* Desktop: Catálogo Izquierda */}
-      <div className="hidden lg:flex lg:w-[55%] flex-col bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
-        <div className="mb-5 flex items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+      <div className="hidden lg:flex lg:w-[55%] flex-col bg-card rounded-2xl border border-border p-5 shadow-soft">
+        <div className="mb-5 flex items-center gap-3 border-b border-border/60 pb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <PackageSearch className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900">Catálogo de productos</h2>
-            <p className="text-xs font-medium text-slate-500">Busca o escanea SKU para agregar al carrito</p>
+            <h2 className="text-lg font-bold text-foreground">Catálogo de productos</h2>
+            <p className="text-xs font-medium text-muted-foreground">Busca o escanea SKU para agregar al carrito</p>
           </div>
         </div>
         <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
@@ -546,7 +578,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
       {flyParticles.map((p) => (
         <div
           key={p.id}
-          className="pointer-events-none fixed z-[200] flex items-center gap-1.5 rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-bold text-white shadow-lg"
+          className="pointer-events-none fixed z-[200] flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-lg"
           style={{
             left: p.x,
             top: p.y,
@@ -561,19 +593,29 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
 
       {/* Modal Mobile Catalog */}
       {showCatalogModal ? (
-        <div className="fixed inset-0 z-50 flex flex-col bg-slate-50 lg:hidden">
-          <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-4 shadow-sm">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="catalogo-movil-titulo"
+          className="fixed inset-0 z-50 flex flex-col bg-background lg:hidden"
+        >
+          <div className="flex items-center justify-between border-b border-border bg-card px-4 py-4 shadow-soft">
             <div className="flex items-center gap-2">
-              <PackageSearch className="h-5 w-5 text-indigo-600" />
-              <h2 className="font-bold text-slate-900 text-lg">Catálogo</h2>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <PackageSearch className="h-5 w-5" />
+              </span>
+              <h2 id="catalogo-movil-titulo" className="text-lg font-bold text-foreground">
+                Catálogo
+              </h2>
             </div>
-            <button
+            <Button
               type="button"
+              variant="outline"
               onClick={() => setShowCatalogModal(false)}
-              className="flex h-8 items-center rounded-lg border border-slate-300 bg-white px-3 text-xs font-bold text-slate-700 shadow-sm active:bg-slate-100"
+              className="h-9 rounded-lg px-3 text-xs font-bold"
             >
               Cerrar
-            </button>
+            </Button>
           </div>
           <div className="flex-1 overflow-y-auto p-4">{catalogGrid}</div>
         </div>

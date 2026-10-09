@@ -1,6 +1,14 @@
+import Link from "next/link";
+import { History, Search } from "lucide-react";
 import { isAdminRole, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { HistorialClient } from "@/components/historial/historial-client";
+import { PageHeader } from "@/components/page-header";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type HistorialPageProps = {
   searchParams?: {
@@ -91,64 +99,119 @@ export default async function HistorialPage({ searchParams }: HistorialPageProps
 
   return (
     <section className="space-y-4">
-      <div className="flex items-end justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Historial de facturas</h1>
-          <p className="text-sm text-slate-600">
-            {isAdmin ? "Vista global · puedes anular facturas desde aquí." : "Vista de tus facturas."}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Historial de facturas"
+        subtitle={
+          isAdmin
+            ? "Vista global · puedes anular facturas desde aquí."
+            : "Vista de tus facturas."
+        }
+        icon={
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <History className="h-5 w-5" />
+          </span>
+        }
+        actions={<Badge variant="outline" className="tabular-nums">{facturas.length} resultados</Badge>}
+      />
 
-      <form className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-6">
-        <input
-          name="numero"
-          defaultValue={numero}
-          placeholder="N° factura"
-          className="rounded border border-slate-300 px-2 py-2 text-sm"
-        />
-        <select
-          name="estado"
-          defaultValue={estado}
-          className="rounded border border-slate-300 px-2 py-2 text-sm"
-        >
-          <option value="">Todos los estados</option>
-          <option value="pendiente_impresion">Pendiente</option>
-          <option value="impresa">Impresa</option>
-          <option value="anulada">Anulada</option>
-        </select>
-        {isAdmin ? (
-          <select
-            name="vendedor_id"
-            defaultValue={vendedorId}
-            className="rounded border border-slate-300 px-2 py-2 text-sm"
-          >
-            <option value="">Todos los vendedores</option>
-            {(vendedores ?? []).map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.nombre}
-              </option>
-            ))}
-          </select>
-        ) : (
-          <div className="hidden sm:block" />
-        )}
-        <input
-          name="desde"
-          type="date"
-          defaultValue={desde}
-          className="rounded border border-slate-300 px-2 py-2 text-sm"
-        />
-        <input
-          name="hasta"
-          type="date"
-          defaultValue={hasta}
-          className="rounded border border-slate-300 px-2 py-2 text-sm"
-        />
-        <button type="submit" className="rounded bg-slate-900 px-3 py-2 text-sm text-white">
-          Filtrar
-        </button>
-      </form>
+      <Card className="border-border shadow-soft">
+        <CardContent className="p-4">
+          <form className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <div className="space-y-1.5">
+              <Label htmlFor="f-numero" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                N° factura
+              </Label>
+              <Input
+                id="f-numero"
+                name="numero"
+                defaultValue={numero}
+                inputMode="numeric"
+                placeholder="Ej. 1024"
+                className="h-9 rounded-lg tabular-nums"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="f-estado" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Estado
+              </Label>
+              <select
+                id="f-estado"
+                name="estado"
+                defaultValue={estado}
+                className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+              >
+                <option value="">Todos los estados</option>
+                <option value="pendiente_impresion">Pendiente</option>
+                <option value="impresa">Impresa</option>
+                <option value="anulada">Anulada</option>
+              </select>
+            </div>
+
+            {isAdmin ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="f-vendedor" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Vendedor
+                </Label>
+                <select
+                  id="f-vendedor"
+                  name="vendedor_id"
+                  defaultValue={vendedorId}
+                  className="flex h-9 w-full rounded-lg border border-input bg-background px-3 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                >
+                  <option value="">Todos los vendedores</option>
+                  {(vendedores ?? []).map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.nombre}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className="hidden xl:block" />
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="f-desde" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Desde
+              </Label>
+              <Input
+                id="f-desde"
+                name="desde"
+                type="date"
+                defaultValue={desde}
+                className="h-9 rounded-lg"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="f-hasta" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Hasta
+              </Label>
+              <Input
+                id="f-hasta"
+                name="hasta"
+                type="date"
+                defaultValue={hasta}
+                className="h-9 rounded-lg"
+              />
+            </div>
+
+            <div className="flex items-end gap-2 sm:col-span-2 xl:col-span-1">
+              <Button type="submit" className="h-9 flex-1 rounded-lg">
+                <Search className="mr-2 h-4 w-4" />
+                Filtrar
+              </Button>
+              <Link
+                href="/historial"
+                className="flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              >
+                Limpiar
+              </Link>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <HistorialClient facturas={facturas} isAdmin={isAdmin} />
     </section>

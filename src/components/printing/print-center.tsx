@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { FACTURA_ESTADOS } from "@/lib/constants";
 import type { FacturaConDetalle, Negocio } from "@/lib/types";
 import { Ticket } from "@/components/printing/ticket";
+import { PageHeader } from "@/components/page-header";
 import { Printer, CheckCircle, AlertCircle } from "lucide-react";
 
 type PrintCenterProps = {
@@ -247,43 +248,51 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-          <Printer className="h-5 w-5" />
-        </div>
-        <div>
-          <h1 className="text-lg font-bold text-slate-900">Centro de impresión</h1>
-          <p className="text-xs font-medium text-slate-500">Impresión automática · No cierre esta pestaña</p>
-        </div>
-      </div>
+      <PageHeader
+        back="/facturas"
+        backLabel="Volver a facturas"
+        title="Centro de impresión"
+        subtitle="Impresión automática · no cierres esta pestaña"
+        icon={
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <Printer className="h-5 w-5" />
+          </span>
+        }
+      />
 
-      <div className={`rounded-2xl border p-4 text-sm font-medium ${
-        status.includes("Error")
-          ? "border-rose-200 bg-rose-50 text-rose-700"
-          : status.includes("Imprimiendo")
-            ? "border-indigo-200 bg-indigo-50 text-indigo-700"
-            : "border-slate-200 bg-white text-slate-700"
-      }`}>
+      <div
+        role="status"
+        aria-live="polite"
+        className={`rounded-2xl border p-4 text-sm font-medium ${
+          status.includes("Error")
+            ? "border-rose-200 bg-rose-50 text-rose-700"
+            : status.includes("Imprimiendo")
+              ? "border-primary/30 bg-primary/10 text-primary"
+              : "border-border bg-card text-foreground"
+        }`}
+      >
         {status}
       </div>
 
       {logs.length > 0 && (
-        <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Registro de impresiones</p>
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-soft">
+          <div className="border-b border-border px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Registro de impresiones
+            </p>
           </div>
-          <div className="max-h-48 overflow-y-auto divide-y divide-slate-50">
+          <div className="max-h-48 divide-y divide-border/60 overflow-y-auto">
             {logs.map((log) => (
               <div key={log.id} className="flex items-center gap-3 px-4 py-2.5">
                 {log.status === "ok" ? (
-                  <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0" />
+                  <CheckCircle className="h-4 w-4 shrink-0 text-emerald-500" />
                 ) : (
-                  <AlertCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
                 )}
-                <span className="text-sm font-medium text-slate-700">
+                <span className="text-sm font-medium text-foreground tabular-nums">
                   {log.numero ? `Factura #${log.numero}` : "Factura sin cargar"}
                 </span>
-                <span className="ml-auto text-xs text-slate-400">
+                <span className="ml-auto text-xs text-muted-foreground tabular-nums">
                   {log.timestamp.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </span>
               </div>
@@ -296,10 +305,12 @@ export function PrintCenter({ negocio }: PrintCenterProps) {
         {currentFactura ? (
           <Ticket factura={currentFactura} negocio={negocio} printMode />
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 text-center">
-            <Printer className="mx-auto h-10 w-10 text-slate-300 mb-3" />
-            <p className="text-sm font-medium text-slate-500">Sin facturas en cola</p>
-            <p className="text-xs text-slate-400 mt-1">Las facturas aparecerán aquí automáticamente</p>
+          <div className="rounded-2xl border-2 border-dashed border-border bg-card p-8 text-center">
+            <Printer className="mx-auto mb-3 h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm font-medium text-muted-foreground">Sin facturas en cola</p>
+            <p className="mt-1 text-xs text-muted-foreground/70">
+              Las facturas aparecerán aquí automáticamente
+            </p>
           </div>
         )}
       </div>

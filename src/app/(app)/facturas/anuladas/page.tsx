@@ -4,7 +4,15 @@ import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatCOP } from "@/lib/invoice-calculations";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import { Search, FileX } from "lucide-react";
+
+const TH =
+  "px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
 type PageProps = {
   searchParams?: {
@@ -117,106 +125,96 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
       />
 
       {/* Filtros */}
-      <form className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <input
-          name="numero"
-          defaultValue={numero}
-          placeholder="N° factura"
-          className="w-36 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-        />
-        <div className="flex items-center gap-1">
-          <label className="text-xs font-medium text-slate-500">Desde</label>
-          <input
-            name="desde"
-            type="date"
-            defaultValue={desde}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-          />
-        </div>
-        <div className="flex items-center gap-1">
-          <label className="text-xs font-medium text-slate-500">Hasta</label>
-          <input
-            name="hasta"
-            type="date"
-            defaultValue={hasta}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
-          />
-        </div>
-        <button
-          type="submit"
-          className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-        >
-          <Search className="h-3.5 w-3.5" />
-          Filtrar
-        </button>
-        {(desde || hasta || numero) && (
-          <Link
-            href="/facturas/anuladas"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            Limpiar
-          </Link>
-        )}
-      </form>
+      <Card className="border-border shadow-soft">
+        <CardContent className="p-4">
+          <form className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="a-numero" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                N° factura
+              </Label>
+              <Input
+                id="a-numero"
+                name="numero"
+                defaultValue={numero}
+                inputMode="numeric"
+                placeholder="Ej. 1024"
+                className="h-9 rounded-lg tabular-nums"
+              />
+            </div>
 
-      {/* Tabla — desktop */}
-      <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
+            <div className="space-y-1.5">
+              <Label htmlFor="a-desde" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Desde
+              </Label>
+              <Input id="a-desde" name="desde" type="date" defaultValue={desde} className="h-9 rounded-lg" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="a-hasta" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Hasta
+              </Label>
+              <Input id="a-hasta" name="hasta" type="date" defaultValue={hasta} className="h-9 rounded-lg" />
+            </div>
+
+            <div className="flex items-end gap-2">
+              <Button type="submit" className="h-9 flex-1 rounded-lg">
+                <Search className="mr-2 h-4 w-4" />
+                Filtrar
+              </Button>
+              {desde || hasta || numero ? (
+                <Link
+                  href="/facturas/anuladas"
+                  className="flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
+                  Limpiar
+                </Link>
+              ) : null}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Tabla — escritorio */}
+      <div className="hidden overflow-hidden rounded-2xl border border-border bg-card shadow-soft md:block">
+        <div className="overflow-x-auto">
         <table className="min-w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left">
+          <thead className="border-b border-border bg-accent/60 text-left">
             <tr>
-              <th className="px-4 py-3 font-semibold text-slate-700">N°</th>
-              <th className="px-4 py-3 font-semibold text-slate-700">
-                Fecha venta
-              </th>
-              <th className="px-4 py-3 font-semibold text-slate-700">
-                Fecha anulación
-              </th>
-              <th className="px-4 py-3 font-semibold text-slate-700">
-                Anulado por
-              </th>
-              <th className="px-4 py-3 font-semibold text-slate-700">
-                Motivo
-              </th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-700">
-                Total
-              </th>
+              <th className={TH}>N°</th>
+              <th className={TH}>Fecha venta</th>
+              <th className={TH}>Fecha anulación</th>
+              <th className={TH}>Anulado por</th>
+              <th className={TH}>Motivo</th>
+              <th className={cn(TH, "text-right")}>Total</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-border/70">
             {rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-16 text-center text-sm text-slate-400"
-                >
-                  <FileX className="mx-auto mb-2 h-8 w-8 text-slate-300" />
+                <td colSpan={6} className="px-4 py-16 text-center text-sm text-muted-foreground">
+                  <FileX className="mx-auto mb-2 h-8 w-8 text-muted-foreground/40" />
                   No hay facturas anuladas con los filtros aplicados.
                 </td>
               </tr>
             ) : null}
             {rows.map((f) => (
-              <tr
-                key={f.id}
-                className="opacity-75 transition-opacity hover:opacity-100"
-              >
-                <td className="px-4 py-3 font-bold text-slate-700">
+              <tr key={f.id} className="transition-opacity hover:bg-accent/50">
+                <td className="px-4 py-3 font-bold text-foreground tabular-nums">
                   <Link
                     href={`/historial/${f.id}`}
-                    className="hover:text-indigo-600 hover:underline"
+                    className="text-primary hover:underline"
                   >
                     #{f.numero_factura}
                   </Link>
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 text-muted-foreground tabular-nums">
                   {fmtFecha(f.created_at)}
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-slate-500">
+                <td className="whitespace-nowrap px-4 py-3 text-muted-foreground tabular-nums">
                   {fmtFecha(f.fecha_anulacion)}
                 </td>
-                <td className="px-4 py-3 text-slate-600">
-                  {f.usuarioNombre}
-                </td>
-                <td className="max-w-xs px-4 py-3 text-slate-500">
+                <td className="px-4 py-3 text-muted-foreground">{f.usuarioNombre}</td>
+                <td className="max-w-xs px-4 py-3 text-muted-foreground">
                   {f.razon_anulacion ? (
                     <span title={f.razon_anulacion}>
                       {f.razon_anulacion.length > 80
@@ -224,37 +222,38 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
                         : f.razon_anulacion}
                     </span>
                   ) : (
-                    <span className="italic text-slate-300">Sin motivo registrado</span>
+                    <span className="italic text-muted-foreground/60">Sin motivo registrado</span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-slate-700 line-through">
+                <td className="px-4 py-3 text-right font-bold text-foreground line-through tabular-nums">
                   {formatCOP(f.total)}
                 </td>
               </tr>
             ))}
           </tbody>
           {rows.length > 0 && (
-            <tfoot className="border-t border-slate-200 bg-slate-50">
+            <tfoot className="border-t border-border bg-accent/60">
               <tr>
-                <td colSpan={5} className="px-4 py-2 text-xs text-slate-500">
+                <td colSpan={5} className="px-4 py-2 text-xs text-muted-foreground">
                   {rows.length} factura{rows.length !== 1 ? "s" : ""} anulada
                   {rows.length !== 1 ? "s" : ""}
                 </td>
-                <td className="px-4 py-2 text-right text-xs font-semibold text-slate-600">
+                <td className="px-4 py-2 text-right text-xs font-semibold text-foreground tabular-nums">
                   {formatCOP(rows.reduce((s, r) => s + r.total, 0))} devueltos
                 </td>
               </tr>
             </tfoot>
           )}
         </table>
+        </div>
       </div>
 
       {/* Tarjetas — móvil */}
       <div className="grid gap-3 md:hidden">
         {rows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 py-12 text-center">
-            <FileX className="mb-2 h-8 w-8 text-slate-300" />
-            <p className="text-sm text-slate-500">
+          <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-card py-12 text-center">
+            <FileX className="mb-2 h-8 w-8 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
               No hay facturas anuladas con los filtros aplicados.
             </p>
           </div>
@@ -262,36 +261,34 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
         {rows.map((f) => (
           <div
             key={f.id}
-            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm opacity-80"
+            className="rounded-2xl border border-border bg-card p-4 opacity-85 shadow-soft"
           >
-            <div className="mb-3 flex items-start justify-between">
-              <div>
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="min-w-0">
                 <Link
                   href={`/historial/${f.id}`}
-                  className="font-bold text-slate-700 hover:text-indigo-600"
+                  className="font-bold text-primary hover:underline tabular-nums"
                 >
                   #{f.numero_factura}
                 </Link>
-                <p className="mt-0.5 text-xs text-slate-500">
+                <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                   Venta: {fmtFecha(f.created_at)}
                 </p>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground tabular-nums">
                   Anulada: {fmtFecha(f.fecha_anulacion)}
                 </p>
               </div>
-              <p className="font-bold text-slate-600 line-through">
+              <p className="shrink-0 font-bold text-muted-foreground line-through tabular-nums">
                 {formatCOP(f.total)}
               </p>
             </div>
-            <p className="mb-1 text-xs font-medium text-slate-500">
-              Por: {f.usuarioNombre}
-            </p>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">Por: {f.usuarioNombre}</p>
             {f.razon_anulacion ? (
-              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                 {f.razon_anulacion}
               </p>
             ) : (
-              <p className="text-xs italic text-slate-300">Sin motivo registrado</p>
+              <p className="text-xs italic text-muted-foreground/60">Sin motivo registrado</p>
             )}
           </div>
         ))}
