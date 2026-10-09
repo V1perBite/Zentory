@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft, Search, ShieldCheck } from "lucide-react";
+import { Search, ShieldCheck } from "lucide-react";
 import { hasPermission, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import {
   ACCIONES_AUDITORIA,
   AUDITORIA_MODULOS,
@@ -68,23 +69,17 @@ export default async function AuditoriaPage({ searchParams }: PageProps) {
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="h-5 w-5 text-indigo-600" />
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">Auditoría</h1>
-            <p className="text-sm text-slate-500">
-              Historial inmutable de quién hizo qué, cuándo y sobre qué elemento
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        back="/dashboard"
+        backLabel="Volver al dashboard"
+        title="Auditoría"
+        subtitle="Historial inmutable de quién hizo qué, cuándo y sobre qué elemento"
+        icon={
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
+            <ShieldCheck className="h-5 w-5" />
+          </span>
+        }
+      />
 
       {/* Filtros */}
       <form className="grid gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-4 lg:grid-cols-6">
@@ -137,8 +132,14 @@ export default async function AuditoriaPage({ searchParams }: PageProps) {
         />
 
         <div className="flex items-center gap-1">
-          <label className="text-xs font-medium text-slate-500">Desde</label>
+          <label
+            htmlFor="aud-desde"
+            className="text-xs font-medium text-slate-500"
+          >
+            Desde
+          </label>
           <input
+            id="aud-desde"
             name="desde"
             type="date"
             defaultValue={filtros.desde ?? ""}
@@ -146,8 +147,14 @@ export default async function AuditoriaPage({ searchParams }: PageProps) {
           />
         </div>
         <div className="flex items-center gap-1">
-          <label className="text-xs font-medium text-slate-500">Hasta</label>
+          <label
+            htmlFor="aud-hasta"
+            className="text-xs font-medium text-slate-500"
+          >
+            Hasta
+          </label>
           <input
+            id="aud-hasta"
             name="hasta"
             type="date"
             defaultValue={filtros.hasta ?? ""}

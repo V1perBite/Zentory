@@ -3,7 +3,8 @@ import Link from "next/link";
 import { isAdmin, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { formatCOP } from "@/lib/invoice-calculations";
-import { ArrowLeft, Search, FileX } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { Search, FileX } from "lucide-react";
 
 type PageProps = {
   searchParams?: {
@@ -101,24 +102,19 @@ export default async function FacturasAnuladasPage({ searchParams }: PageProps) 
   return (
     <section className="space-y-6">
       {/* Encabezado */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/facturas"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">
-            Registro de anulaciones
-          </h1>
-          <p className="text-sm text-slate-500">
-            Solo visible para administradores · {rows.length} factura
-            {rows.length !== 1 ? "s" : ""} anulada
-            {rows.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        back="/facturas"
+        backLabel="Volver a facturas"
+        title="Registro de anulaciones"
+        subtitle={`Solo visible para administradores · ${rows.length} factura${
+          rows.length !== 1 ? "s" : ""
+        } anulada${rows.length !== 1 ? "s" : ""}`}
+        icon={
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+            <FileX className="h-5 w-5" />
+          </span>
+        }
+      />
 
       {/* Filtros */}
       <form className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

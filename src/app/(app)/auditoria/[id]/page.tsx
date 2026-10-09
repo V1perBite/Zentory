@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft, Clock, Info, MonitorSmartphone, User } from "lucide-react";
+import { Clock, Info, MonitorSmartphone, User } from "lucide-react";
 import { hasPermission, requireProfile } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { PageHeader } from "@/components/page-header";
 import {
   ACCIONES_AUDITORIA,
   MODULO_BADGE,
@@ -39,27 +39,21 @@ export default async function AuditoriaDetallePage({ params }: PageProps) {
 
   return (
     <section className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/auditoria"
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold text-slate-900">{accion}</h1>
-            <span
-              className={`rounded px-2 py-0.5 text-xs font-medium ${
-                MODULO_BADGE[ev.modulo] ?? "bg-slate-100 text-slate-600"
-              }`}
-            >
-              {MODULO_LABEL[ev.modulo] ?? ev.modulo}
-            </span>
-          </div>
-          <p className="text-sm text-slate-500">{ev.descripcion ?? "Sin descripción"}</p>
-        </div>
-      </div>
+      <PageHeader
+        back="/auditoria"
+        backLabel="Volver a la auditoría"
+        title={accion}
+        subtitle={ev.descripcion ?? "Sin descripción"}
+        actions={
+          <span
+            className={`rounded-lg px-2.5 py-1 text-xs font-medium ${
+              MODULO_BADGE[ev.modulo] ?? "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {MODULO_LABEL[ev.modulo] ?? ev.modulo}
+          </span>
+        }
+      />
 
       {/* Datos del evento */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
