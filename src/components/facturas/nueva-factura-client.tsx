@@ -78,6 +78,7 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
   const [clienteEmail, setClienteEmail] = useState("");
   const [clienteTelefono, setClienteTelefono] = useState("");
   const [clienteDireccion, setClienteDireccion] = useState("");
+  const [clienteAbierto, setClienteAbierto] = useState(true);
 
   const filteredProductos = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -342,22 +343,36 @@ export function NuevaFacturaClient({ productos, rol }: NuevaFacturaClientProps) 
       ) : null}
 
       <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
-        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground">Datos del cliente</p>
-        <ClienteAutocomplete
-          onSelect={handleSelectCliente}
-          nombre={clienteNombre}
-          onNombreChange={(v) => { setClienteNombre(v); setClienteId(null); }}
-          identificacion={clienteIdentificacion}
-          onIdentificacionChange={(v) => { setClienteIdentificacion(v); setClienteId(null); }}
-          nit={clienteNit}
-          onNitChange={setClienteNit}
-          email={clienteEmail}
-          onEmailChange={setClienteEmail}
-          telefono={clienteTelefono}
-          onTelefonoChange={setClienteTelefono}
-          direccion={clienteDireccion}
-          onDireccionChange={setClienteDireccion}
-        />
+        <button
+          type="button"
+          onClick={() => setClienteAbierto(!clienteAbierto)}
+          aria-expanded={clienteAbierto}
+          className="flex w-full items-center justify-between"
+        >
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Datos del cliente</p>
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${clienteAbierto ? "rotate-180" : ""}`} />
+        </button>
+        <div
+          className={`grid transition-all duration-200 ease-in-out ${clienteAbierto ? "grid-rows-[1fr] opacity-100 mt-3" : "grid-rows-[0fr] opacity-0"}`}
+        >
+          <div className="overflow-hidden">
+            <ClienteAutocomplete
+              onSelect={handleSelectCliente}
+              nombre={clienteNombre}
+              onNombreChange={(v) => { setClienteNombre(v); setClienteId(null); }}
+              identificacion={clienteIdentificacion}
+              onIdentificacionChange={(v) => { setClienteIdentificacion(v); setClienteId(null); }}
+              nit={clienteNit}
+              onNitChange={setClienteNit}
+              email={clienteEmail}
+              onEmailChange={setClienteEmail}
+              telefono={clienteTelefono}
+              onTelefonoChange={setClienteTelefono}
+              direccion={clienteDireccion}
+              onDireccionChange={setClienteDireccion}
+            />
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3 pb-48 lg:flex-1 lg:min-h-0 lg:overflow-y-auto lg:pb-0">
