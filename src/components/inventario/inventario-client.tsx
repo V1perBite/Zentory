@@ -9,6 +9,17 @@ import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
 import { ExportCsvButton } from "@/components/ui/export-csv-button";
 import { exportarInventarioCSV } from "@/app/actions/inventario-export";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Search, Edit2, Archive, Trash2, Package, Tag, TrendingUp, AlertTriangle } from "lucide-react";
 
 type ProductoRow = {
@@ -326,11 +337,10 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
       </div>
 
       {editModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setEditModal(null)}>
-          <div className="w-full max-w-lg space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <Dialog open onOpenChange={(open) => { if (!open) setEditModal(null); }}>
+          <DialogContent className="max-w-lg space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold">Editar: {editModal.nombre}</h3>
-              <button type="button" onClick={() => setEditModal(null)} className="rounded border border-slate-300 px-2 py-1 text-xs">Cerrar ✕</button>
             </div>
             {error ? <p className="rounded bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
             <form onSubmit={onSaveEdit} className="space-y-3">
@@ -369,19 +379,18 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       ) : null}
 
       {movModal ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={() => setMovModal(null)}>
-          <div className="w-full max-w-md space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <Dialog open onOpenChange={(open) => { if (!open) setMovModal(null); }}>
+          <DialogContent className="max-w-md space-y-4 p-5">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold">Kardex</h3>
                 <p className="text-xs text-slate-500">{movModal.producto.nombre} · Stock actual: {movModal.producto.stock_actual}</p>
               </div>
-              <button type="button" onClick={() => setMovModal(null)} className="rounded border border-slate-300 px-2 py-1 text-xs">Cerrar ✕</button>
             </div>
 
             {error ? <p className="rounded bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
@@ -472,8 +481,8 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
                 📊 Ver historial de movimientos
               </button>
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       ) : null}
 
       {kardexProducto ? (
@@ -485,53 +494,39 @@ export function InventarioClient({ productos, isAdmin }: InventarioClientProps) 
       ) : null}
 
       {deleteConfirm ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          onClick={() => !deleteLoading && setDeleteConfirm(null)}
+        <AlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open && !deleteLoading) setDeleteConfirm(null);
+          }}
         >
-          <div
-            className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <h3 className="font-semibold text-slate-900">Eliminar producto</h3>
-                <p className="mt-0.5 text-sm text-slate-600">
-                  ¿Eliminar <span className="font-medium">&quot;{deleteConfirm.nombre}&quot;</span>?
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={deleteLoading}
-                onClick={() => setDeleteConfirm(null)}
-                className="rounded border border-slate-300 px-2 py-1 text-xs disabled:opacity-40"
-              >
-                ✕
-              </button>
-            </div>
+          <AlertDialogContent className="max-w-sm">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminar producto</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Eliminar <span className="font-medium text-foreground">&quot;{deleteConfirm.nombre}&quot;</span>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
             <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
               ⚠️ Esta acción es permanente. El historial de movimientos del producto se conservará.
             </p>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={deleteLoading}
-                onClick={() => setDeleteConfirm(null)}
-                className="rounded border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-40 hover:bg-slate-50"
-              >
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteLoading} className="rounded-lg">
                 Cancelar
-              </button>
-              <button
-                type="button"
+              </AlertDialogCancel>
+              <AlertDialogAction
                 disabled={deleteLoading}
-                onClick={handleDelete}
-                className="rounded bg-rose-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-60 hover:bg-rose-700"
+                onClick={(e) => {
+                  e.preventDefault();
+                  void handleDelete();
+                }}
+                className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {deleteLoading ? "Eliminando..." : "Sí, eliminar"}
-              </button>
-            </div>
-          </div>
-        </div>
+                {deleteLoading ? "Eliminando…" : "Sí, eliminar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ) : null}
     </>
   );

@@ -19,6 +19,17 @@ import { ExportCsvButton } from "@/components/ui/export-csv-button";
 import { NumberField } from "@/components/ui/number-field";
 import { PageHeader } from "@/components/page-header";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
   Search,
   Plus,
   Edit2,
@@ -438,25 +449,17 @@ export function ComprasClient({ filas, empresas }: Props) {
 
       {/* Modal crear / editar */}
       {abierto ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          onClick={() => !guardando && cerrar()}
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open && !guardando) cerrar();
+          }}
         >
-          <div
-            className="max-h-[90vh] w-full max-w-xl overflow-y-auto space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <DialogContent className="max-h-[90vh] w-full max-w-xl space-y-4 overflow-y-auto p-5 sm:rounded-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold">
                 {editando ? "Editar factura de compra" : "Nueva factura de compra"}
               </h3>
-              <button
-                type="button"
-                onClick={cerrar}
-                className="rounded border border-slate-300 px-2 py-1 text-xs"
-              >
-                Cerrar ✕
-              </button>
             </div>
 
             {error ? (
@@ -571,50 +574,46 @@ export function ComprasClient({ filas, empresas }: Props) {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       ) : null}
 
       {/* Confirmar eliminación */}
       {eliminando ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          onClick={() => !guardando && setEliminando(null)}
+        <AlertDialog
+          open
+          onOpenChange={(open) => {
+            if (!open && !guardando) setEliminando(null);
+          }}
         >
-          <div
-            className="w-full max-w-sm space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div>
-              <h3 className="font-semibold text-slate-900">Eliminar factura de compra</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                ¿Eliminar la factura de <span className="font-medium">{eliminando.empresa}</span> por{" "}
-                <span className="font-medium">{formatCOP(Number(eliminando.valor))}</span>?
-              </p>
-            </div>
+          <AlertDialogContent className="max-w-sm sm:rounded-2xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Eliminar factura de compra</AlertDialogTitle>
+              <AlertDialogDescription>
+                ¿Eliminar la factura de <span className="font-medium text-foreground">{eliminando.empresa}</span> por{" "}
+                <span className="font-medium text-foreground tabular-nums">{formatCOP(Number(eliminando.valor))}</span>?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
             <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
               ⚠️ Esta acción es permanente y queda registrada en la auditoría.
             </p>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                disabled={guardando}
-                onClick={() => setEliminando(null)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm disabled:opacity-50"
-              >
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={guardando} className="rounded-lg">
                 Cancelar
-              </button>
-              <button
-                type="button"
+              </AlertDialogCancel>
+              <AlertDialogAction
                 disabled={guardando}
-                onClick={onEliminar}
-                className="rounded-lg bg-rose-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+                onClick={(e) => {
+                  e.preventDefault();
+                  void onEliminar();
+                }}
+                className="rounded-lg bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
-                {guardando ? "Eliminando..." : "Sí, eliminar"}
-              </button>
-            </div>
-          </div>
-        </div>
+                {guardando ? "Eliminando…" : "Sí, eliminar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ) : null}
     </div>
   );

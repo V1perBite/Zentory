@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatCOP } from "@/lib/invoice-calculations";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type MovimientoKardex = {
   id: string;
@@ -106,26 +107,13 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
   }, [movimientos, desde, hasta]);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-4"
-      onClick={onClose}
-    >
-      <div
-        className="mt-8 w-full max-w-5xl rounded-xl border border-slate-200 bg-white shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="top-24 max-h-[85vh] w-full max-w-5xl translate-y-0 gap-0 overflow-y-auto p-0 sm:rounded-2xl">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-base font-semibold">Kardex — {nombreProducto}</h2>
             <p className="text-xs text-slate-500">Historial con costo promedio ponderado</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-md border border-slate-300 px-2 py-1 text-xs hover:bg-slate-50"
-          >
-            Cerrar ✕
-          </button>
         </div>
 
         <div className="flex gap-4 border-b border-slate-200 px-5 py-3">
@@ -212,7 +200,7 @@ export function KardexModal({ productoId, nombreProducto, onClose }: KardexModal
             </table>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

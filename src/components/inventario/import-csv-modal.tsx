@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { descargarCsv } from "@/lib/csv";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type ParsedProducto = {
   nombre: string;
@@ -201,14 +202,13 @@ export function ImportCsvModal({ onClose }: ImportCsvModalProps) {
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 pt-12"
-      onClick={() => !loading && onClose()}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open && !loading) onClose();
+      }}
     >
-      <div
-        className="w-full max-w-3xl space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <DialogContent className="max-h-[85vh] w-full max-w-3xl space-y-4 overflow-y-auto p-5 sm:rounded-2xl">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold">Importar productos desde CSV</h3>
@@ -216,14 +216,6 @@ export function ImportCsvModal({ onClose }: ImportCsvModalProps) {
               Soporta archivos Excel exportados como CSV (coma o punto y coma como separador).
             </p>
           </div>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={onClose}
-            className="rounded-md border border-slate-300 px-2 py-1 text-xs disabled:opacity-40"
-          >
-            Cerrar ✕
-          </button>
         </div>
 
         {/* Template download */}
@@ -369,7 +361,7 @@ export function ImportCsvModal({ onClose }: ImportCsvModalProps) {
             </div>
           </div>
         ) : null}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

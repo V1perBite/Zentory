@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { SkuInput } from "@/components/ui/sku-input";
 import { NumberField } from "@/components/ui/number-field";
 import { ImportCsvModal } from "@/components/inventario/import-csv-modal";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 type ProductoRow = {
   id: string;
@@ -135,23 +136,10 @@ export function AdminTools({ productos }: AdminToolsProps) {
       {error ? <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
 
       {openPanel ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
-          onClick={() => setOpenPanel(null)}
-        >
-          <div
-            className="w-full max-w-2xl space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
+        <Dialog open onOpenChange={(open) => { if (!open) setOpenPanel(null); }}>
+          <DialogContent className="max-w-2xl space-y-4 p-5 sm:rounded-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold text-slate-900">{panelTitle[openPanel]}</h3>
-              <button
-                type="button"
-                onClick={() => setOpenPanel(null)}
-                className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-50"
-              >
-                Cerrar ✕
-              </button>
             </div>
 
             {success ? <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p> : null}
@@ -246,8 +234,8 @@ export function AdminTools({ productos }: AdminToolsProps) {
               </form>
             ) : null}
 
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       ) : null}
     </div>
   );
