@@ -18,6 +18,8 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
+  AlertCircle,
+  Clock,
   Loader2,
   Receipt,
   LayoutDashboard,
@@ -228,6 +230,7 @@ export default function DashboardClient() {
         valor: number;
         fecha_recibida: string;
         dias: number;
+        diasRestantes: number;
       }>,
     },
   };
@@ -545,26 +548,49 @@ export default function DashboardClient() {
                   valor: number;
                   fecha_recibida: string;
                   dias: number;
-                }) => (
-                  <li
-                    key={c.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border bg-accent/40 px-3 py-2"
-                  >
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-foreground">{c.empresa}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {c.numero_factura ? `#${c.numero_factura} · ` : ""}
-                        recibida {c.fecha_recibida}
-                      </p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(c.valor)}</p>
-                      <p className={`text-[11px] tabular-nums ${c.dias > compras.diasVencida ? "font-semibold text-rose-600" : "text-muted-foreground"}`}>
-                        {c.dias} d
-                      </p>
-                    </div>
-                  </li>
-                ))}
+                  diasRestantes: number;
+                }) => {
+                  const vencida = c.diasRestantes < 0;
+                  const porVencer = !vencida && c.diasRestantes <= 5;
+                  return (
+                    <li
+                      key={c.id}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-xl border px-3 py-2",
+                        vencida
+                          ? "border-rose-200 bg-rose-50/60"
+                          : porVencer
+                            ? "border-amber-200 bg-amber-50/60"
+                            : "border-border bg-accent/40",
+                      )}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <p className="truncate text-sm font-semibold text-foreground">{c.empresa}</p>
+                          {vencida && (
+                            <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />
+                          )}
+                          {porVencer && (
+                            <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {c.numero_factura ? `#${c.numero_factura} · ` : ""}
+                          recibida {c.fecha_recibida}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(c.valor)}</p>
+                        <p className={cn(
+                          "text-[11px] tabular-nums",
+                          vencida ? "font-semibold text-rose-600" : porVencer ? "font-semibold text-amber-600" : "text-muted-foreground",
+                        )}>
+                          {vencida ? `${Math.abs(c.diasRestantes)} d atrasada` : porVencer ? `vence en ${c.diasRestantes} d` : `${c.diasRestantes} d restantes`}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center py-8 text-center">

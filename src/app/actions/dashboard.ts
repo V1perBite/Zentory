@@ -191,21 +191,30 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
     0,
   );
 
+  const porPagar = pendientes
+    .map((c) => {
+      const dias = Math.round(
+        (Date.now() - new Date(`${c.fecha_recibida}T00:00:00`).getTime()) /
+          86400000,
+      );
+      return {
+        id: c.id,
+        empresa: c.empresa,
+        numero_factura: c.numero_factura as string | null,
+        valor: Number(c.valor ?? 0),
+        fecha_recibida: c.fecha_recibida as string,
+        dias,
+        diasRestantes: DIAS_COMPRA_VENCIDA - dias,
+      };
+    })
+    .sort((a, b) => a.diasRestantes - b.diasRestantes)
+    .slice(0, 5);
+
   const compras = {
     pendientePago,
     pendientesCount: pendientes.length,
     diasVencida: DIAS_COMPRA_VENCIDA,
-    porPagar: pendientes.slice(0, 5).map((c) => ({
-      id: c.id,
-      empresa: c.empresa,
-      numero_factura: c.numero_factura as string | null,
-      valor: Number(c.valor ?? 0),
-      fecha_recibida: c.fecha_recibida as string,
-      dias: Math.round(
-        (Date.now() - new Date(`${c.fecha_recibida}T00:00:00`).getTime()) /
-          86400000,
-      ),
-    })),
+    porPagar,
   };
 
   return {
