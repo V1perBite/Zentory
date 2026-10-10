@@ -25,7 +25,7 @@ export type FacturaCompraInput = {
 type Fila = Record<string, unknown>;
 
 const CAMPOS =
-  "id,empresa,numero_factura,concepto,valor,fecha_recibida,fecha_pago,estado,notas,creado_por,created_at,updated_at";
+  "id,empresa,numero_factura,concepto,valor,valor_abonado,fecha_recibida,fecha_pago,estado,notas,creado_por,created_at,updated_at";
 
 function validar(input: FacturaCompraInput): string | null {
   if (!input.empresa.trim()) return "La empresa es obligatoria.";
@@ -114,10 +114,18 @@ export async function actualizarFacturaCompra(
   if (!previa) return { error: "La factura de compra ya no existe." };
 
   const valores = normalizar(input);
+  const abonadoPrevio = Number(previa.valor_abonado ?? 0);
   const supabase = createClient();
   const { error } = await supabase
     .from("facturas_compra")
-    .update({ ...valores, updated_at: new Date().toISOString() })
+    .update({
+      ...valores,
+      valor_abonado:
+        valores.estado === "pagada"
+          ? Number(valores.valor)
+          : Math.min(abonadoPrevio, Number(valores.valor)),
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", id);
   if (error) return { error: error.message };
 
@@ -165,11 +173,75 @@ export async function eliminarFacturaCompra(
   return {};
 }
 
+export async function registrarAbono(
+  id: string,
+  monto: number,
+): Promise<{ error?: string }> {
+  const profile = await requireProfile();
+  if (!isAdmin(profile)) return { error: "Sin permisos." };
+
+  if (!Number.isFinite(monto) || monto <= 0) {
+    return { error: "El abono debe ser un número mayor a 0." };
+  }
+
+  const { fila: previa, error: errorLectura } = await leerFila(id);
+  if (errorLectura) return { error: errorLectura };
+  if (!previa) return { error: "La factura de compra ya no existe." };
+  if (previa.estado === "anulada") {
+    return { error: "No se puede abonar a una factura anulada." };
+  }
+  if (previa.estado === "pagada") {
+    return { error: "La factura ya está pagada en su totalidad." };
+  }
+
+  const valor = Number(previa.valor ?? 0);
+  const abonado = Number(previa.valor_abonado ?? 0);
+  const saldo = valor - abonado;
+  if (monto > saldo + 0.01) {
+    return {
+      error: `El abono (${monto}) supera el saldo pendiente (${saldo.toFixed(2)}).`,
+    };
+  }
+
+  const nuevoAbonado = abonado + monto;
+  const saldada = nuevoAbonado >= valor - 0.01;
+  const ahora = new Date().toISOString();
+  const hoyISO = ahora.slice(0, 10);
+
+  const cambios = {
+    valor_abonado: nuevoAbonado,
+    estado: saldada ? "pagada" : "parcial",
+    fecha_pago: saldada ? hoyISO : previa.fecha_pago,
+    updated_at: ahora,
+  };
+
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("facturas_compra")
+    .update(cambios)
+    .eq("id", id);
+  if (error) return { error: error.message };
+
+  await registrarEventoAuditoria({
+    action: "COMPRA_ABONO",
+    module: AUDITORIA_MODULOS.COMPRAS,
+    entityType: AUDITORIA_ENTIDADES.FACTURA_COMPRA,
+    entityId: id,
+    entityRef: (previa.empresa as string) ?? null,
+    description: `Abono de ${monto} a factura de compra de ${previa.empresa} (saldo anterior: ${saldo.toFixed(2)})`,
+    oldValue: { valor_abonado: abonado, estado: previa.estado },
+    newValue: { valor_abonado: nuevoAbonado, estado: cambios.estado },
+  });
+
+  return {};
+}
+
 const COLUMNAS: readonly ColumnaCsv[] = [
   ["empresa", "empresa"],
   ["numero_factura", "numero_factura"],
   ["concepto", "concepto"],
   ["valor", "valor"],
+  ["valor_abonado", "valor_abonado"],
   ["fecha_recibida", "fecha_recibida"],
   ["fecha_pago", "fecha_pago"],
   ["estado", "estado"],

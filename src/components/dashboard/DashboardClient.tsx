@@ -25,6 +25,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { getDashboardStats, type DateRangeKey } from "@/app/actions/dashboard";
+import { DIAS_COMPRA_POR_VENCER } from "@/lib/constants";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -228,6 +229,7 @@ export default function DashboardClient() {
         empresa: string;
         numero_factura: string | null;
         valor: number;
+        saldo: number;
         fecha_recibida: string;
         dias: number;
         diasRestantes: number;
@@ -546,12 +548,13 @@ export default function DashboardClient() {
                   empresa: string;
                   numero_factura: string | null;
                   valor: number;
+                  saldo: number;
                   fecha_recibida: string;
                   dias: number;
                   diasRestantes: number;
                 }) => {
                   const vencida = c.diasRestantes < 0;
-                  const porVencer = !vencida && c.diasRestantes <= 5;
+                  const porVencer = !vencida && c.diasRestantes <= DIAS_COMPRA_POR_VENCER;
                   return (
                     <li
                       key={c.id}
@@ -580,7 +583,12 @@ export default function DashboardClient() {
                         </p>
                       </div>
                       <div className="shrink-0 text-right">
-                        <p className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(c.valor)}</p>
+                        <p className="text-sm font-bold tabular-nums text-foreground">{formatCurrency(c.saldo)}</p>
+                        {c.saldo < c.valor ? (
+                          <p className="text-[11px] tabular-nums text-sky-600">
+                            abonado {formatCurrency(c.valor - c.saldo)}
+                          </p>
+                        ) : null}
                         <p className={cn(
                           "text-[11px] tabular-nums",
                           vencida ? "font-semibold text-rose-600" : porVencer ? "font-semibold text-amber-600" : "text-muted-foreground",

@@ -5,7 +5,7 @@ import { ComprasClient } from "@/components/compras/compras-client";
 import type { FacturaCompra } from "@/lib/types";
 
 const CAMPOS =
-  "id,empresa,numero_factura,concepto,valor,fecha_recibida,fecha_pago,estado,notas,creado_por,created_at,updated_at";
+  "id,empresa,numero_factura,concepto,valor,valor_abonado,fecha_recibida,fecha_pago,estado,notas,creado_por,created_at,updated_at";
 
 export default async function ComprasPage() {
   const profile = await requireProfile();

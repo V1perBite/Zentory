@@ -180,31 +180,41 @@ export async function getDashboardStats(rangeKey: DateRangeKey) {
   // rango seleccionado: lo que queda por pagar es "lo que se debe hoy".
   const { data: comprasPendientes } = await supabase
     .from("facturas_compra")
-    .select("id, empresa, numero_factura, valor, fecha_recibida, fecha_pago, estado")
+    .select("id, empresa, numero_factura, valor, valor_abonado, fecha_recibida, fecha_pago, estado")
     .in("estado", ["pendiente", "parcial"])
     .order("fecha_recibida", { ascending: true })
     .limit(500);
 
   const pendientes = comprasPendientes ?? [];
   const pendientePago = pendientes.reduce(
-    (sum, c) => sum + Number(c.valor ?? 0),
+    (sum, c) => sum + (Number(c.valor ?? 0) - Number(c.valor_abonado ?? 0)),
     0,
   );
 
+  const hoy0 = new Date();
+  hoy0.setHours(0, 0, 0, 0);
+
   const porPagar = pendientes
     .map((c) => {
-      const dias = Math.round(
-        (Date.now() - new Date(`${c.fecha_recibida}T00:00:00`).getTime()) /
-          86400000,
-      );
+      const reciboMs = new Date(`${c.fecha_recibida}T00:00:00`).getTime();
+      const fechaPago = (c.fecha_pago as string | null) ?? null;
+      // La fecha límite es el plazo de pago; si no existe, recibida + 30 días.
+      const limiteMs = fechaPago
+        ? new Date(`${fechaPago}T00:00:00`).getTime()
+        : reciboMs + DIAS_COMPRA_VENCIDA * 86400000;
+      const dias = Math.round((hoy0.getTime() - reciboMs) / 86400000);
+      const diasRestantes = Math.round((limiteMs - hoy0.getTime()) / 86400000);
+      const valor = Number(c.valor ?? 0);
       return {
         id: c.id,
         empresa: c.empresa,
         numero_factura: c.numero_factura as string | null,
-        valor: Number(c.valor ?? 0),
+        valor,
+        saldo: valor - Number(c.valor_abonado ?? 0),
         fecha_recibida: c.fecha_recibida as string,
+        fecha_pago: fechaPago,
         dias,
-        diasRestantes: DIAS_COMPRA_VENCIDA - dias,
+        diasRestantes,
       };
     })
     .sort((a, b) => a.diasRestantes - b.diasRestantes)

@@ -124,6 +124,7 @@ export type FacturaCompra = {
   numero_factura: string | null;
   concepto: string | null;
   valor: number;
+  valor_abonado: number;
   fecha_recibida: string;
   fecha_pago: string | null;
   estado: EstadoCompra;

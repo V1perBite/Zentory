@@ -6,17 +6,21 @@ import { formatCOP } from "@/lib/invoice-calculations";
 import {
   ESTADOS_COMPRA,
   ESTADO_COMPRA_BADGE,
+  DIAS_COMPRA_VENCIDA,
+  DIAS_COMPRA_POR_VENCER,
 } from "@/lib/constants";
 import type { EstadoCompra, FacturaCompra } from "@/lib/types";
 import {
   crearFacturaCompra,
   actualizarFacturaCompra,
   eliminarFacturaCompra,
+  registrarAbono,
   exportarComprasCSV,
   type FacturaCompraInput,
 } from "@/app/actions/facturas-compra";
 import { ExportCsvButton } from "@/components/ui/export-csv-button";
 import { NumberField } from "@/components/ui/number-field";
+import { EmpresaAutocomplete } from "@/components/compras/empresa-autocomplete";
 import { PageHeader } from "@/components/page-header";
 import {
   AlertDialog,
@@ -36,6 +40,8 @@ import {
   Trash2,
   CheckCircle2,
   Receipt,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 
 type Props = {
@@ -73,6 +79,49 @@ function diasDesde(iso: string): number {
   const hoy0 = new Date();
   hoy0.setHours(0, 0, 0, 0);
   return Math.round((hoy0.getTime() - fecha.getTime()) / 86400000);
+}
+
+type Vencimiento = {
+  vencida: boolean;
+  porVencer: boolean;
+  diasRestantes: number;
+  fechaLimite: string;
+};
+
+function masDias(iso: string, dias: number): string {
+  const [a, m, d] = iso.split("-").map(Number);
+  const fecha = new Date(a, (m ?? 1) - 1, (d ?? 1) + dias);
+  const yy = fecha.getFullYear();
+  const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+  const dd = String(fecha.getDate()).padStart(2, "0");
+  return `${yy}-${mm}-${dd}`;
+}
+
+function fechaCorta(iso: string): string {
+  const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const [, m, d] = iso.split("-").map(Number);
+  return `${d} ${meses[(m ?? 1) - 1] ?? ""}`;
+}
+
+/**
+ * Vencimiento de una factura pendiente. La fecha límite es el plazo de pago
+ * (`fecha_pago`); si no tiene, se asumen DIAS_COMPRA_VENCIDA desde la recepción.
+ */
+function vencimientoDe(f: Pick<FacturaCompra, "fecha_recibida" | "fecha_pago">): Vencimiento {
+  const fechaLimite = f.fecha_pago ?? masDias(f.fecha_recibida, DIAS_COMPRA_VENCIDA);
+  const diasRestantes = -diasDesde(fechaLimite);
+  return {
+    vencida: diasRestantes < 0,
+    porVencer: diasRestantes >= 0 && diasRestantes <= DIAS_COMPRA_POR_VENCER,
+    diasRestantes,
+    fechaLimite,
+  };
+}
+
+function textoVencimiento(ve: Vencimiento): string {
+  if (ve.vencida) return `vencida hace ${Math.abs(ve.diasRestantes)} d`;
+  if (ve.porVencer) return `vence en ${ve.diasRestantes} d`;
+  return `vence ${fechaCorta(ve.fechaLimite)}`;
 }
 
 function formVacio(): Formulario {
@@ -125,6 +174,8 @@ export function ComprasClient({ filas, empresas }: Props) {
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState<FacturaCompra | null>(null);
+  const [abonando, setAbonando] = useState<FacturaCompra | null>(null);
+  const [montoAbono, setMontoAbono] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -147,7 +198,9 @@ export function ComprasClient({ filas, empresas }: Props) {
       const v = Number(f.valor ?? 0);
       if (f.estado === "anulada") continue;
       total += v;
-      if (f.estado === "pendiente" || f.estado === "parcial") pendiente += v;
+      if (f.estado === "pendiente" || f.estado === "parcial") {
+        pendiente += v - Number(f.valor_abonado ?? 0);
+      }
       if (f.estado === "pagada") pagado += v;
     }
     return { total, pendiente, pagado };
@@ -222,13 +275,44 @@ export function ComprasClient({ filas, empresas }: Props) {
     const res = await actualizarFacturaCompra(f.id, {
       ...desdeFila(f),
       estado: "pagada",
-      fecha_pago: f.fecha_pago || hoy(),
+      fecha_pago: hoy(),
     });
     if (res.error) {
       setError(res.error);
       return;
     }
     setSuccess(`"${f.empresa}" marcada como pagada.`);
+    router.refresh();
+  };
+
+  const abrirAbono = (f: FacturaCompra) => {
+    const saldo = Number(f.valor ?? 0) - Number(f.valor_abonado ?? 0);
+    setAbonando(f);
+    setMontoAbono(saldo > 0 ? saldo : 0);
+    setError(null);
+  };
+
+  const cerrarAbono = () => {
+    if (guardando) return;
+    setAbonando(null);
+    setMontoAbono(0);
+    setError(null);
+  };
+
+  const onAbonar = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!abonando) return;
+    setGuardando(true);
+    setError(null);
+    const res = await registrarAbono(abonando.id, montoAbono);
+    setGuardando(false);
+    if (res.error) {
+      setError(res.error);
+      return;
+    }
+    setSuccess(`Abono de ${formatCOP(montoAbono)} registrado a "${abonando.empresa}".`);
+    setAbonando(null);
+    setMontoAbono(0);
     router.refresh();
   };
 
@@ -264,7 +348,7 @@ export function ComprasClient({ filas, empresas }: Props) {
       {success ? (
         <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{success}</p>
       ) : null}
-      {error && !abierto && !eliminando ? (
+      {error && !abierto && !eliminando && !abonando ? (
         <p role="alert" className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
       ) : null}
 
@@ -325,11 +409,27 @@ export function ComprasClient({ filas, empresas }: Props) {
 
       {/* Vista móvil */}
       <div className="grid gap-3 md:hidden">
-        {filtradas.map((f) => (
-          <div key={f.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        {filtradas.map((f) => {
+          const ve = vencimientoDe(f);
+          const pendiente = f.estado === "pendiente" || f.estado === "parcial";
+          return (
+          <div
+            key={f.id}
+            className={`rounded-2xl border bg-white p-4 shadow-sm ${
+              pendiente && ve.vencida
+                ? "border-rose-200"
+                : pendiente && ve.porVencer
+                  ? "border-amber-200"
+                  : "border-slate-200"
+            }`}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h4 className="truncate font-bold text-slate-900">{f.empresa}</h4>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="truncate font-bold text-slate-900">{f.empresa}</h4>
+                  {pendiente && ve.vencida && <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />}
+                  {pendiente && ve.porVencer && <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />}
+                </div>
                 <p className="mt-0.5 truncate text-xs text-slate-500">
                   {f.numero_factura ? `#${f.numero_factura} · ` : ""}
                   {f.concepto || "Sin concepto"}
@@ -342,10 +442,24 @@ export function ComprasClient({ filas, empresas }: Props) {
             <p className="mt-3 text-lg font-bold text-slate-900">{formatCOP(Number(f.valor))}</p>
             <div className="mt-1 flex flex-wrap gap-x-4 text-xs text-slate-500">
               <span>Recibida: {f.fecha_recibida}</span>
-              <span>Pago: {f.fecha_pago ?? "—"}</span>
+              <span>{pendiente && f.fecha_pago ? "Vence" : "Pago"}: {f.fecha_pago ?? "—"}</span>
+              {pendiente ? (
+                <span className={`font-semibold ${ve.vencida ? "text-rose-600" : ve.porVencer ? "text-amber-600" : "text-slate-500"}`}>
+                  {textoVencimiento(ve)}
+                </span>
+              ) : null}
             </div>
-            <div className="mt-3 flex gap-2">
-              {f.estado !== "pagada" && f.estado !== "anulada" ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {pendiente ? (
+                <button
+                  type="button"
+                  onClick={() => abrirAbono(f)}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-sky-50 px-3 py-2 text-xs font-semibold text-sky-700"
+                >
+                  Abonar
+                </button>
+              ) : null}
+              {pendiente ? (
                 <button
                   type="button"
                   onClick={() => marcarPagada(f)}
@@ -371,7 +485,8 @@ export function ComprasClient({ filas, empresas }: Props) {
               </button>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Vista desktop */}
@@ -382,7 +497,7 @@ export function ComprasClient({ filas, empresas }: Props) {
               <th className="px-4 py-3 font-semibold text-slate-700">Empresa</th>
               <th className="px-4 py-3 font-semibold text-slate-700">Valor</th>
               <th className="px-4 py-3 font-semibold text-slate-700">Recibida</th>
-              <th className="px-4 py-3 font-semibold text-slate-700">Pago</th>
+              <th className="px-4 py-3 font-semibold text-slate-700">Vence / pago</th>
               <th className="px-4 py-3 font-semibold text-slate-700">Estado</th>
               <th className="px-4 py-3 font-semibold text-slate-700">Acciones</th>
             </tr>
@@ -390,20 +505,50 @@ export function ComprasClient({ filas, empresas }: Props) {
           <tbody className="divide-y divide-slate-100">
             {filtradas.map((f) => {
               const pendiente = f.estado === "pendiente" || f.estado === "parcial";
+              const ve = vencimientoDe(f);
+              const abonado = Number(f.valor_abonado ?? 0);
+              const saldo = Number(f.valor ?? 0) - abonado;
+              const filaCls =
+                pendiente && ve.vencida
+                  ? "bg-rose-50/40"
+                  : pendiente && ve.porVencer
+                    ? "bg-amber-50/40"
+                    : "hover:bg-slate-50/50";
               return (
-                <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={f.id} className={`${filaCls} transition-colors`}>
                   <td className="px-4 py-3">
-                    <p className="font-bold text-slate-900">{f.empresa}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold text-slate-900">{f.empresa}</p>
+                      {pendiente && ve.vencida && <AlertCircle className="h-3.5 w-3.5 shrink-0 text-rose-500" />}
+                      {pendiente && ve.porVencer && <Clock className="h-3.5 w-3.5 shrink-0 text-amber-500" />}
+                    </div>
                     <p className="mt-0.5 text-xs text-slate-500">
                       {f.numero_factura ? `#${f.numero_factura}` : "—"}
                       {f.concepto ? ` · ${f.concepto}` : ""}
                     </p>
                   </td>
-                  <td className="px-4 py-3 font-semibold">{formatCOP(Number(f.valor))}</td>
+                  <td className="px-4 py-3 font-semibold">
+                    {formatCOP(Number(f.valor))}
+                    {abonado > 0 && f.estado !== "pagada" ? (
+                      <span className="mt-0.5 block text-[11px] font-medium text-sky-600">
+                        abonado {formatCOP(abonado)} · saldo {formatCOP(saldo)}
+                      </span>
+                    ) : null}
+                  </td>
                   <td className="px-4 py-3 text-slate-600">
                     {f.fecha_recibida}
                     {pendiente ? (
-                      <span className="ml-2 text-xs text-amber-600">hace {diasDesde(f.fecha_recibida)} d</span>
+                      <span
+                        className={`ml-2 text-xs ${
+                          ve.vencida
+                            ? "font-semibold text-rose-600"
+                            : ve.porVencer
+                              ? "font-semibold text-amber-600"
+                              : "text-slate-500"
+                        }`}
+                      >
+                        {textoVencimiento(ve)}
+                      </span>
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-600">{f.fecha_pago ?? "—"}</td>
@@ -414,6 +559,15 @@ export function ComprasClient({ filas, empresas }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      {pendiente ? (
+                        <button
+                          type="button"
+                          onClick={() => abrirAbono(f)}
+                          className="flex h-8 items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 text-xs font-semibold text-sky-700 hover:bg-sky-100"
+                        >
+                          Abonar
+                        </button>
+                      ) : null}
                       {pendiente ? (
                         <button
                           type="button"
@@ -436,7 +590,7 @@ export function ComprasClient({ filas, empresas }: Props) {
                         className="flex h-8 w-8 items-center justify-center rounded-lg border border-rose-200 bg-rose-50 text-rose-600 shadow-sm hover:bg-rose-100"
                         aria-label="Eliminar"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </td>
@@ -470,19 +624,14 @@ export function ComprasClient({ filas, empresas }: Props) {
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className={`${labelCls} sm:col-span-2`}>
                   <span>Empresa *</span>
-                  <input
-                    list="empresas-compra"
+                  <EmpresaAutocomplete
                     value={form.empresa}
-                    onChange={(e) => setForm({ ...form, empresa: e.target.value })}
+                    onChange={(v) => setForm({ ...form, empresa: v })}
+                    sugerencias={sugerencias}
                     placeholder="Ej: Distribuidora Andina"
                     required
                     className={inputCls}
                   />
-                  <datalist id="empresas-compra">
-                    {sugerencias.map((e) => (
-                      <option key={e} value={e} />
-                    ))}
-                  </datalist>
                 </label>
 
                 <label className={labelCls}>
@@ -540,13 +689,16 @@ export function ComprasClient({ filas, empresas }: Props) {
                 </label>
 
                 <label className={labelCls}>
-                  <span>Fecha de pago</span>
+                  <span>Fecha de pago (plazo)</span>
                   <input
                     type="date"
                     value={form.fecha_pago}
                     onChange={(e) => setForm({ ...form, fecha_pago: e.target.value })}
                     className={inputCls}
                   />
+                  <span className="block text-[11px] font-normal text-slate-400">
+                    Fecha límite para considerarla al día. Vacía = 30 días después de recibida.
+                  </span>
                 </label>
 
                 <label className={`${labelCls} sm:col-span-2`}>
@@ -571,6 +723,71 @@ export function ComprasClient({ filas, empresas }: Props) {
                 </button>
                 <button type="submit" disabled={guardando} className={btnPrimario}>
                   {guardando ? "Guardando..." : editando ? "Guardar cambios" : "Registrar factura"}
+                </button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      ) : null}
+
+      {/* Modal abono */}
+      {abonando ? (
+        <Dialog
+          open
+          onOpenChange={(open) => {
+            if (!open) cerrarAbono();
+          }}
+        >
+          <DialogContent className="w-full max-w-md space-y-4 p-5 sm:rounded-2xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base font-semibold">Registrar abono</h3>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
+              <p className="font-bold text-slate-900">{abonando.empresa}</p>
+              <div className="mt-1 flex justify-between text-xs text-slate-600">
+                <span>Total</span>
+                <span className="tabular-nums">{formatCOP(Number(abonando.valor))}</span>
+              </div>
+              <div className="flex justify-between text-xs text-slate-600">
+                <span>Abonado</span>
+                <span className="tabular-nums">{formatCOP(Number(abonando.valor_abonado ?? 0))}</span>
+              </div>
+              <div className="mt-1 flex justify-between text-xs font-bold text-slate-900">
+                <span>Saldo</span>
+                <span className="tabular-nums">
+                  {formatCOP(Number(abonando.valor) - Number(abonando.valor_abonado ?? 0))}
+                </span>
+              </div>
+            </div>
+
+            {error ? (
+              <p role="alert" className="rounded bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>
+            ) : null}
+
+            <form onSubmit={onAbonar} className="space-y-3">
+              <label className={labelCls}>
+                <span>Monto del abono *</span>
+                <NumberField
+                  value={montoAbono}
+                  min={0}
+                  onChange={setMontoAbono}
+                  required
+                  className={`${inputCls} text-right`}
+                />
+              </label>
+
+              <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                <button
+                  type="button"
+                  onClick={cerrarAbono}
+                  disabled={guardando}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button type="submit" disabled={guardando} className={btnPrimario}>
+                  {guardando ? "Registrando..." : "Registrar abono"}
                 </button>
               </div>
             </form>

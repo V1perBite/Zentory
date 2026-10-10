@@ -104,6 +104,7 @@ export const ACCIONES_AUDITORIA: Record<string, string> = {
   COMPRA_CREADA: "Factura de compra creada",
   COMPRA_MODIFICADA: "Factura de compra modificada",
   COMPRA_ELIMINADA: "Factura de compra eliminada",
+  COMPRA_ABONO: "Abono a factura de compra",
   // Configuración
   CONFIGURACION_CREADA: "Configuración creada",
   CONFIGURACION_MODIFICADA: "Configuración modificada",
@@ -154,3 +155,6 @@ export const ESTADO_COMPRA_BADGE: Record<string, string> = {
 
 /** Días desde la fecha de recibida a partir de los cuales se alerta. */
 export const DIAS_COMPRA_VENCIDA = 30;
+
+/** Días restantes antes del vencimiento a partir de los cuales se marca "por vencer". */
+export const DIAS_COMPRA_POR_VENCER = 5;
